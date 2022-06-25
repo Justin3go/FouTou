@@ -17,6 +17,13 @@ contract Auth {
     bytes32 internal constant ADMIN = keccak256(abi.encodePacked("ADMIN"));
     bytes32 internal constant USER = keccak256(abi.encodePacked("USER"));
 
+    // 设置一些定量以后使用  // todo
+    uint16 public ADMIN_NUM = 30; // 预计管理员数量
+    int32 public REQUIRED_ADMIN = 15; // 多少管理员同意才能完成盗版认证
+    uint256 public REQUIRED_REPOERTER = 100; // 多少用户举报才会提交申请
+    uint256 public REQUIRED_FANS = 500; // 多少粉丝数才有被举报的功能
+    uint256 internal FEE = 100; // 除以100，代表1%
+
     modifier onlyRole(bytes32 _role) {
         require(roles[_role][msg.sender], "not authorized");
         _;
@@ -26,6 +33,18 @@ contract Auth {
         roles[SUPER_ADMIN][msg.sender] = true;
         // LOG中零地址到某个地址代表：记录部署合约的人成为超级管理员的事件
         emit TransferSUPER_ADMIN(address(0), msg.sender);
+    }
+
+    function config(
+        uint16 _ADMIN_NUM,
+        int32 _REQUIRED_ADMIN,
+        uint256 _REQUIRED_REPOERTER,
+        uint256 _REQUIRED_FANS
+    ) external onlyRole(SUPER_ADMIN) {
+        ADMIN_NUM = _ADMIN_NUM;
+        REQUIRED_ADMIN = _REQUIRED_ADMIN;
+        REQUIRED_REPOERTER = _REQUIRED_REPOERTER;
+        REQUIRED_FANS = _REQUIRED_FANS;
     }
 
     function transferSUPER_ADMIN(address _account)
@@ -38,6 +57,7 @@ contract Auth {
     }
 
     function _USER2ADMIN(address _account) internal {
+        require(!roles[ADMIN][_account], "already admin");
         roles[ADMIN][_account] = true;
         emit GrantRole(ADMIN, _account);
     }
@@ -47,6 +67,7 @@ contract Auth {
     }
 
     function _ADMIN2USER(address _account) internal {
+        require(roles[ADMIN][_account], "already user");
         roles[ADMIN][_account] = false;
         emit RevokeRole(ADMIN, _account);
     }
@@ -66,6 +87,11 @@ contract Photo {
     event AddFT(FT ft, uint256 tokenID);
     event Buy(uint256 indexed tokenID, address indexed account);
     event AlertPrice(uint256 indexed tokenID, uint256 newPrice, uint256 time);
+    event AlertDescription(
+        uint256 indexed tokenID,
+        string newDes,
+        uint256 time
+    );
 
     using Counters for Counters.Counter;
     Counters.Counter private _tokenIds;
@@ -73,8 +99,8 @@ contract Photo {
     struct FT {
         string tokenURI; // 必须是ipfs
         address owner;
-        uint8 status; // 0: 正常，1: 盗版，2: 重新认证
-        uint reportCount;  // 举报数
+        bool status; // false: 正常，ture: 盗版
+        uint256 reportCount; // 举报数
         uint256 price;
         uint256 uploadtime;
         string description; // string化的json数组，由前端解析。
@@ -94,7 +120,15 @@ contract Photo {
         string calldata _description
     ) internal view returns (FT memory ft) {
         require(_owner != address(0), "owner is address(0)");
-        ft = FT(_tokenURI, _owner, 0, 0, _price, block.timestamp, _description);
+        ft = FT(
+            _tokenURI,
+            _owner,
+            false,
+            0,
+            _price,
+            block.timestamp,
+            _description
+        );
     }
 
     function _bindTokenID(FT calldata ft) internal returns (uint256) {
@@ -117,10 +151,21 @@ contract Photo {
         FT storage ft = FTMap[_tokenID];
         require(ft.owner == msg.sender, "You are not this FT's owner");
         ft.price = _newPrice;
+
+        emit AlertPrice(_tokenID, _newPrice, block.timestamp);
+    }
+
+    function alertDescription(uint256 _tokenID, string calldata _newDes)
+        external
+    {
+        FT storage ft = FTMap[_tokenID];
+        require(ft.owner == msg.sender, "You are not this FT's owner");
+        ft.description = _newDes;
+
+        emit AlertDescription(_tokenID, _newDes, block.timestamp);
     }
 }
 
-// todo 后续看看是否需要添加onlyRole(USER)
 contract Person is Auth {
     event AlertPER_items(address indexed account, string newItems);
     event AlertPER_ad(address indexed account, string newAd);
@@ -151,7 +196,7 @@ contract Person is Auth {
 
     function reducePER_credit(address _account) external onlyRole(ADMIN) {
         require(
-            !AlertedCreditLog[msg.sender][_account],  // 需要未操作过
+            !AlertedCreditLog[msg.sender][_account], // 需要未操作过
             "Cannot repeat operation for the same user"
         );
         require(PER_credit[_account] >= -100, "It's already the minimum");
@@ -162,7 +207,7 @@ contract Person is Auth {
 
     function revokeReduce(address _account) external onlyRole(ADMIN) {
         require(
-            AlertedCreditLog[msg.sender][_account],  // 需要操作过
+            AlertedCreditLog[msg.sender][_account], // 需要操作过
             "No operation for this user, cannot revoke"
         );
         PER_credit[_account]++;
@@ -171,8 +216,116 @@ contract Person is Auth {
     }
 }
 
-contract Copyright {
-    // ? 如何存储待处理版权的消息
+contract Copyright is Photo, Person {
+    event Submit(uint256 tokenID, uint256 time);
+    event Report(
+        address indexed reporter,
+        uint256 indexed tokenID,
+        uint256 time
+    );
+    event Approve(address indexed admin, uint256 indexed tokenID, uint256 time);
+    event Reject(address indexed admin, uint256 indexed tokenID, uint256 time);
+    event Ignore(address indexed admin, uint256 indexed tokenID, uint256 time);
+    event Pirate(uint256 tokenID, uint256 time);
+    // 有两类消息：1.盗版认证消息，2.盗版申述消息（算了，不要2，直接增加盗版认证的难度就可以了）
+    // tokenID -> [reporters]
+    mapping(uint256 => address[]) public MES_reporters; // 举报人集合
+    // tokenID -> reporter -> 是否举报过
+    mapping(uint256 => mapping(address => bool)) public isReported; // 是否举报过一次
+    // 已经提交的认证消息--提交的时间
+    mapping(uint256 => uint256) public messageTime;
+    uint256[] public reportedTokenID;
+    // tokenID -> 多少管理员同意了，有可能为负，代表拒绝的多一点
+    mapping(uint256 => int32) public approveCount;
+    // tokenID -> admin -> bool 管理员是否已经处理过该消息了
+    mapping(uint256 => mapping(address => bool)) public isProcessed;
+
+    function _submit(uint256 _tokenID) internal {
+        reportedTokenID.push(_tokenID);
+        messageTime[_tokenID] = block.timestamp;
+        emit Submit(_tokenID, block.timestamp);
+    }
+
+    modifier greaterFansNum(uint256 _tokenID) {
+        address owner = FTMap[_tokenID].owner;
+        uint256 fans = PER_fans[owner].length;
+        require(fans >= REQUIRED_FANS, "less required fans");
+        _;
+    }
+
+    function report(address _reporter, uint256 _tokenID)
+        external
+        onlyRole(USER)
+        greaterFansNum(_tokenID)
+    {
+        // 只能举报超过规定粉丝数的博主
+        require(!isReported[_tokenID][_reporter], "already reported");
+        MES_reporters[_tokenID].push(_reporter);
+        // ==在刚好达到这个数时只执行一次
+        if (MES_reporters[_tokenID].length == REQUIRED_REPOERTER) {
+            _submit(_tokenID);
+        }
+        isReported[_tokenID][_reporter] = true;
+        emit Report(_reporter, _tokenID, block.timestamp);
+    }
+
+    modifier notProcessed(uint256 _tokenID, address _admin) {
+        require(!isProcessed[_tokenID][_admin], "already processed");
+        _;
+    }
+
+    function approve(uint256 _tokenID)
+        external
+        onlyRole(ADMIN)
+        notProcessed(_tokenID, msg.sender)
+    {
+        if (
+            ++approveCount[_tokenID] == REQUIRED_ADMIN &&
+            !FTMap[_tokenID].status
+        ) {
+            // 盗版认证成功
+            FTMap[_tokenID].status = true;
+            emit Pirate(_tokenID, block.timestamp);
+        }
+        isProcessed[_tokenID][msg.sender] = true;
+        emit Approve(msg.sender, _tokenID, block.timestamp);
+    }
+
+    function reject(uint256 _tokenID)
+        external
+        onlyRole(ADMIN)
+        notProcessed(_tokenID, msg.sender)
+    {
+        approveCount[_tokenID]--;
+        isProcessed[_tokenID][msg.sender] = true;
+        emit Reject(msg.sender, _tokenID, block.timestamp);
+    }
+
+    function ignore(uint256 _tokenID)
+        external
+        onlyRole(ADMIN)
+        notProcessed(_tokenID, msg.sender)
+    {
+        isProcessed[_tokenID][msg.sender] = true;
+        emit Ignore(msg.sender, _tokenID, block.timestamp);
+    }
+
+    function buy(uint256 _tokenID, address _account)
+        external
+        payable
+        onlyRole(USER)
+        returns (bool)
+    {
+        // 1.计算平台费+售价
+        uint256 price = FTMap[_tokenID].price;
+        uint256 fee = price / FEE;
+        uint totalPrice = price + fee;
+        // 2.交易(先转给合约，再由合约抽取费用后转给卖家)
+        
+        // 3.记录在FT中
+        _baseBuy(_tokenID, _account);
+        // 4.记录在PER_ownedFT中
+    }
 }
 
 contract Community {}
