@@ -110,7 +110,6 @@ contract Photo {
     // tokenID => buyers
     mapping(uint256 => address[]) public buyers;
 
-    // todo 之后还要记录在用户的结构体中
     // 这里的baseXXX()函数仅仅将数据记录在了图片的相关数据结构中，并没有记录在用户的相关数据结构中
     // 但是事件是可以记录了的
     function _baseMint(
@@ -131,7 +130,7 @@ contract Photo {
         );
     }
 
-    function _bindTokenID(FT calldata ft) internal returns (uint256) {
+    function _bindTokenID(FT memory ft) internal returns (uint256) {
         uint256 newTokenID = _tokenIds.current();
         FTMap[newTokenID] = ft;
         emit AddFT(ft, newTokenID);
@@ -140,7 +139,6 @@ contract Photo {
         return newTokenID; // 返回的是当前绑定的ID
     }
 
-    // todo 完整的还要交易铸币payable
     function _baseBuy(uint256 _tokenID, address _account) internal {
         address[] storage _buyers = buyers[_tokenID];
         _buyers.push(_account);
@@ -326,8 +324,8 @@ contract Copyright is Photo, Person {
             msg.value >= totalPrice,
             "Transaction failed because of lack of ether."
         );
-        uint refund = msg.value - totalPrice;
-        if(refund > 0){
+        uint256 refund = msg.value - totalPrice;
+        if (refund > 0) {
             payable(msg.sender).transfer(refund);
         }
         // 3.交易(先转给合约，再由合约抽取费用后转给卖家)
@@ -339,6 +337,18 @@ contract Copyright is Photo, Person {
         PER_boughtFT[_account].push(_tokenID);
 
         emit Buy(msg.sender, _account, _tokenID, block.timestamp);
+    }
+
+    function addFT(
+        string calldata _tokenURI,
+        address payable _owner,
+        uint256 _price,
+        string calldata _description
+    ) external onlyRole(USER) {
+        FT memory ft = _baseMint(_tokenURI, _owner, _price, _description);
+        uint newTokenID = _bindTokenID(ft);
+        PER_ownedFT[_owner].push(newTokenID);
+        // bind 里面已经触发了事件了
     }
 
     fallback() external payable {}
