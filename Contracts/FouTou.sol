@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.0;
 
-import "./utils/Counters.sol";
+import "@openzeppelin/contracts/utils/Counters.sol";
 
 contract Auth {
     event GrantRole(bytes32 indexed role, address indexed account);
@@ -98,7 +98,7 @@ contract Photo {
 
     struct FT {
         string tokenURI; // 必须是ipfs
-        address owner;
+        address payable owner;
         bool status; // false: 正常，ture: 盗版
         uint256 reportCount; // 举报数
         uint256 price;
@@ -115,7 +115,7 @@ contract Photo {
     // 但是事件是可以记录了的
     function _baseMint(
         string calldata _tokenURI,
-        address _owner,
+        address payable _owner,
         uint256 _price,
         string calldata _description
     ) internal view returns (FT memory ft) {
@@ -175,7 +175,7 @@ contract Person is Auth {
     mapping(address => string) public PER_items; // string化的json数据，存储个人信息
     mapping(address => string) public PER_ad; // 设置广告等级和广告图片链接，exp:1$http://www.example.com/pic.png
     mapping(address => int8) public PER_credit; // 信誉值 -100~0, 只有减少和撤销减少
-    mapping(address => uint256[]) public PER_ownedFT; // FT只增不删
+    mapping(address => uint256[]) public PER_ownedFT; // FT只增不删 // todo
     mapping(address => uint256[]) public PER_boughtFT;
     mapping(address => address[]) public PER_fans;
     mapping(address => address[]) public PER_follow; // 取关可能消耗很多gas
@@ -227,6 +227,7 @@ contract Copyright is Photo, Person {
     event Reject(address indexed admin, uint256 indexed tokenID, uint256 time);
     event Ignore(address indexed admin, uint256 indexed tokenID, uint256 time);
     event Pirate(uint256 tokenID, uint256 time);
+    event Buy(address sender, address account, uint256 tokenID, uint256 time);
     // 有两类消息：1.盗版认证消息，2.盗版申述消息（算了，不要2，直接增加盗版认证的难度就可以了）
     // tokenID -> [reporters]
     mapping(uint256 => address[]) public MES_reporters; // 举报人集合
@@ -310,22 +311,39 @@ contract Copyright is Photo, Person {
         emit Ignore(msg.sender, _tokenID, block.timestamp);
     }
 
+    // 传入地址可以为别人购买
     function buy(uint256 _tokenID, address _account)
         external
         payable
         onlyRole(USER)
-        returns (bool)
     {
         // 1.计算平台费+售价
         uint256 price = FTMap[_tokenID].price;
         uint256 fee = price / FEE;
-        uint totalPrice = price + fee;
-        // 2.交易(先转给合约，再由合约抽取费用后转给卖家)
-        
-        // 3.记录在FT中
+        uint256 totalPrice = price + fee;
+        // 2.比较用户支付金额与totalPrice，多退少弃
+        require(
+            msg.value >= totalPrice,
+            "Transaction failed because of lack of ether."
+        );
+        uint refund = msg.value - totalPrice;
+        if(refund > 0){
+            payable(msg.sender).transfer(refund);
+        }
+        // 3.交易(先转给合约，再由合约抽取费用后转给卖家)
+        address payable owner = FTMap[_tokenID].owner;
+        owner.transfer(price);
+        // 4.记录在FT中
         _baseBuy(_tokenID, _account);
-        // 4.记录在PER_ownedFT中
+        // 5.记录在PER_boughtFT中
+        PER_boughtFT[_account].push(_tokenID);
+
+        emit Buy(msg.sender, _account, _tokenID, block.timestamp);
     }
+
+    fallback() external payable {}
+
+    receive() external payable {}
 }
 
 contract Community {}
