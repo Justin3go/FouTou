@@ -12,13 +12,13 @@ contract Auth {
     event Register(address indexed admin, address account, uint256 time);
     // role -> account -> bool : 判断某个账户是否属于该角色
     mapping(bytes32 => mapping(address => bool)) public roles;
-    //
+
     bytes32 internal constant SUPER_ADMIN =
         keccak256(abi.encodePacked("SUPER_ADMIN"));
     bytes32 internal constant ADMIN = keccak256(abi.encodePacked("ADMIN"));
     bytes32 internal constant USER = keccak256(abi.encodePacked("USER"));
 
-    // 设置一些定量以后使用  // todo
+    // 设置一些定量以后使用
     uint16 public ADMIN_NUM = 30; // 预计管理员数量
     int32 public REQUIRED_ADMIN = 15; // 多少管理员同意才能完成盗版认证
     uint256 public REQUIRED_REPOERTER = 100; // 多少用户举报才会提交申请
@@ -32,11 +32,15 @@ contract Auth {
 
     constructor() {
         roles[SUPER_ADMIN][msg.sender] = true;
+        roles[ADMIN][msg.sender] = true;
+        roles[USER][msg.sender] = true;
         // LOG中零地址到某个地址代表：记录部署合约的人成为超级管理员的事件
         emit TransferSUPER_ADMIN(address(0), msg.sender);
+        emit GrantRole(USER, msg.sender);
+        emit Register(msg.sender, msg.sender, block.timestamp);
     }
 
-    function config(
+    function setConfig(
         uint16 _ADMIN_NUM,
         int32 _REQUIRED_ADMIN,
         uint256 _REQUIRED_REPOERTER,
@@ -384,5 +388,5 @@ contract Community is Copyright {
 }
 
 contract FouTou is Community{
-    
+
 }
