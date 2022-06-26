@@ -23,7 +23,7 @@ contract Auth {
     int32 public REQUIRED_ADMIN = 15; // 多少管理员同意才能完成盗版认证
     uint256 public REQUIRED_REPOERTER = 100; // 多少用户举报才会提交申请
     uint256 public REQUIRED_FANS = 500; // 多少粉丝数才有被举报的功能
-    uint256 internal FEE = 100; // 除以100，代表1%
+    uint256 internal FEE = 20; // 除以100，代表5%
     bool IS_TEST_VERSION = true; // 是否公开注册
 
     modifier onlyRole(bytes32 _role) {
@@ -45,12 +45,14 @@ contract Auth {
         uint16 _ADMIN_NUM,
         int32 _REQUIRED_ADMIN,
         uint256 _REQUIRED_REPOERTER,
-        uint256 _REQUIRED_FANS
+        uint256 _REQUIRED_FANS,
+        bool _IS_TEST_VERSION
     ) external onlyRole(SUPER_ADMIN) {
         ADMIN_NUM = _ADMIN_NUM;
         REQUIRED_ADMIN = _REQUIRED_ADMIN;
         REQUIRED_REPOERTER = _REQUIRED_REPOERTER;
         REQUIRED_FANS = _REQUIRED_FANS;
+        IS_TEST_VERSION = _IS_TEST_VERSION;
     }
 
     function transferSUPER_ADMIN(address _account)
@@ -398,4 +400,18 @@ contract Community is Copyright {
     }
 }
 
-contract FouTou is Community {}
+contract FouTou is Community {
+    constructor(
+        uint16 _ADMIN_NUM,
+        int32 _REQUIRED_ADMIN,
+        uint256 _REQUIRED_REPOERTER,
+        uint256 _REQUIRED_FANS,
+        bool _IS_TEST_VERSION
+    ) {
+        ADMIN_NUM = _ADMIN_NUM;
+        REQUIRED_ADMIN = _REQUIRED_ADMIN;
+        REQUIRED_REPOERTER = _REQUIRED_REPOERTER;
+        REQUIRED_FANS = _REQUIRED_FANS;
+        IS_TEST_VERSION = _IS_TEST_VERSION;
+    }
+}
