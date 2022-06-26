@@ -24,6 +24,7 @@ contract Auth {
     uint256 public REQUIRED_REPOERTER = 100; // 多少用户举报才会提交申请
     uint256 public REQUIRED_FANS = 500; // 多少粉丝数才有被举报的功能
     uint256 internal FEE = 100; // 除以100，代表1%
+    bool IS_TEST_VERSION = true; // 是否公开注册
 
     modifier onlyRole(bytes32 _role) {
         require(roles[_role][msg.sender], "not authorized");
@@ -81,10 +82,19 @@ contract Auth {
         _ADMIN2USER(_account);
     }
 
-    function register(address _account) external onlyRole(ADMIN) {
+    function registerByAdmin(address _account) external onlyRole(ADMIN) {
         require(!roles[USER][_account], "This user is already registered!");
         roles[USER][_account] = true;
         emit Register(msg.sender, _account, block.timestamp);
+    }
+
+    function publicRegister(address _account) external {
+        require(
+            !IS_TEST_VERSION,
+            "The registration is not public for the time being. Please contact the administrator to register"
+        );
+        roles[USER][_account] = true;
+        emit Register(address(0), _account, block.timestamp);
     }
 }
 
@@ -178,7 +188,7 @@ contract Person is Auth {
     mapping(address => string) public PER_items; // string化的json数据，存储个人信息
     mapping(address => string) public PER_ad; // 设置广告等级和广告图片链接，exp:1$http://www.example.com/pic.png
     mapping(address => int8) public PER_credit; // 信誉值 -100~0, 只有减少和撤销减少
-    mapping(address => uint256[]) public PER_ownedFT; // FT只增不删 
+    mapping(address => uint256[]) public PER_ownedFT; // FT只增不删
     mapping(address => uint256[]) public PER_boughtFT;
     mapping(address => address[]) public PER_fans;
     mapping(address => address[]) public PER_follow; // 取关可能消耗很多gas
@@ -353,7 +363,7 @@ contract Copyright is Photo, Person {
         string calldata _description
     ) external onlyRole(USER) {
         FT memory ft = _baseMint(_tokenURI, _owner, _price, _description);
-        uint newTokenID = _bindTokenID(ft);
+        uint256 newTokenID = _bindTokenID(ft);
         PER_ownedFT[_owner].push(newTokenID);
         // bind 里面已经触发了事件了
     }
@@ -367,7 +377,7 @@ contract Community is Copyright {
     event Follow(address indexed sender, address indexed account);
     event CancelFollow(address indexed sender, address indexed account);
 
-    function follow(address _account) external onlyRole(USER){
+    function follow(address _account) external onlyRole(USER) {
         require(!isFollowed[msg.sender][_account], "already followed");
         // 双方数组互相添加
         PER_fans[_account].push(msg.sender);
@@ -376,7 +386,8 @@ contract Community is Copyright {
         isFollowed[msg.sender][_account] = true;
         emit Follow(msg.sender, _account);
     }
-    function cancelFollow(address _account) external onlyRole(USER){
+
+    function cancelFollow(address _account) external onlyRole(USER) {
         require(isFollowed[msg.sender][_account], "already not followed");
         // 双方数组互相删除
         ArrayLib.removeByVal(PER_fans[_account], msg.sender);
@@ -387,6 +398,4 @@ contract Community is Copyright {
     }
 }
 
-contract FouTou is Community{
-
-}
+contract FouTou is Community {}
