@@ -3,6 +3,7 @@
 pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/utils/Counters.sol";
+import "./utils/ArrayLib.sol";
 
 contract Auth {
     event GrantRole(bytes32 indexed role, address indexed account);
@@ -173,13 +174,15 @@ contract Person is Auth {
     mapping(address => string) public PER_items; // string化的json数据，存储个人信息
     mapping(address => string) public PER_ad; // 设置广告等级和广告图片链接，exp:1$http://www.example.com/pic.png
     mapping(address => int8) public PER_credit; // 信誉值 -100~0, 只有减少和撤销减少
-    mapping(address => uint256[]) public PER_ownedFT; // FT只增不删 // todo
+    mapping(address => uint256[]) public PER_ownedFT; // FT只增不删 
     mapping(address => uint256[]) public PER_boughtFT;
     mapping(address => address[]) public PER_fans;
     mapping(address => address[]) public PER_follow; // 取关可能消耗很多gas
 
     // 每位管理员对同一位用户只能减少一次信誉分，这里表示是否已经修改过
     mapping(address => mapping(address => bool)) private AlertedCreditLog;
+    // 不能重复关注和重复取关，这里记录是否关注
+    mapping(address => mapping(address => bool)) internal isFollowed;
 
     // 只能自己修改自己的信息
     function alertPER_items(string calldata _items) external onlyRole(USER) {
@@ -356,6 +359,30 @@ contract Copyright is Photo, Person {
     receive() external payable {}
 }
 
-contract Community {}
+contract Community is Copyright {
+    event Follow(address indexed sender, address indexed account);
+    event CancelFollow(address indexed sender, address indexed account);
 
-contract FouTou {}
+    function follow(address _account) external onlyRole(USER){
+        require(!isFollowed[msg.sender][_account], "already followed");
+        // 双方数组互相添加
+        PER_fans[_account].push(msg.sender);
+        PER_follow[msg.sender].push(_account);
+
+        isFollowed[msg.sender][_account] = true;
+        emit Follow(msg.sender, _account);
+    }
+    function cancelFollow(address _account) external onlyRole(USER){
+        require(isFollowed[msg.sender][_account], "already not followed");
+        // 双方数组互相删除
+        ArrayLib.removeByVal(PER_fans[_account], msg.sender);
+        ArrayLib.removeByVal(PER_follow[msg.sender], _account);
+
+        isFollowed[msg.sender][_account] = false;
+        emit CancelFollow(msg.sender, _account);
+    }
+}
+
+contract FouTou is Community{
+    
+}
