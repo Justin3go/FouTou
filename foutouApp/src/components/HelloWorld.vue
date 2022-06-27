@@ -1,52 +1,65 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref } from "vue";
+import { ethers } from "ethers";
 
-defineProps<{ msg: string }>()
+// const provider = new ethers.providers.Web3Provider(window.ethereum)
+// console.log(provider);
 
-const count = ref(0)
+// const signer = provider.getSigner()
+
+// 使用主网
+const network = "maticmum";
+
+const provider = new ethers.providers.AlchemyProvider(network, "1DmXqe7A_S_Q4AE5pxGXNQdeWgixdNeW");
+console.log(provider.getSigner('0xF9F4eD85E440BfD7A8bADE33454C32dB9E66b283'));
+
+
+defineProps<{ msg: string }>();
+
+const count = ref(0);
 </script>
 
 <template>
-  <h1>{{ msg }}</h1>
+	<h1>{{ msg }}</h1>
 
-  <p>
-    Recommended IDE setup:
-    <a href="https://code.visualstudio.com/" target="_blank">VS Code</a>
-    +
-    <a href="https://github.com/johnsoncodehk/volar" target="_blank">Volar</a>
-  </p>
+	<p>
+		Recommended IDE setup:
+		<a href="https://code.visualstudio.com/" target="_blank">VS Code</a>
+		+
+		<a href="https://github.com/johnsoncodehk/volar" target="_blank">Volar</a>
+	</p>
 
-  <p>See <code>README.md</code> for more information.</p>
+	<p>See <code>README.md</code> for more information.</p>
 
-  <p>
-    <a href="https://vitejs.dev/guide/features.html" target="_blank">
-      Vite Docs
-    </a>
-    |
-    <a href="https://v3.vuejs.org/" target="_blank">Vue 3 Docs</a>
-  </p>
+	<p>
+		<a href="https://vitejs.dev/guide/features.html" target="_blank">
+			Vite Docs
+		</a>
+		|
+		<a href="https://v3.vuejs.org/" target="_blank">Vue 3 Docs</a>
+	</p>
 
-  <button type="button" @click="count++">count is: {{ count }}</button>
-  <p>
-    Edit
-    <code>components/HelloWorld.vue</code> to test hot module replacement.
-  </p>
+	<button type="button" @click="count++">count is: {{ count }}</button>
+	<p>
+		Edit
+		<code>components/HelloWorld.vue</code> to test hot module replacement.
+	</p>
 </template>
 
 <style scoped>
 a {
-  color: #42b983;
+	color: #42b983;
 }
 
 label {
-  margin: 0 0.5em;
-  font-weight: bold;
+	margin: 0 0.5em;
+	font-weight: bold;
 }
 
 code {
-  background-color: #eee;
-  padding: 2px 4px;
-  border-radius: 4px;
-  color: #304455;
+	background-color: #eee;
+	padding: 2px 4px;
+	border-radius: 4px;
+	color: #304455;
 }
 </style>
