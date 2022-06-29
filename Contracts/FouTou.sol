@@ -102,7 +102,6 @@ contract Auth {
 
 contract Photo {
     event AddFT(FT ft, uint256 tokenID);
-    event Buy(uint256 indexed tokenID, address indexed account);
     event AlertPrice(uint256 indexed tokenID, uint256 newPrice, uint256 time);
     event AlertDescription(
         uint256 indexed tokenID,
@@ -159,7 +158,6 @@ contract Photo {
     function _baseBuy(uint256 _tokenID, address _account) internal {
         address[] storage _buyers = buyers[_tokenID];
         _buyers.push(_account);
-        emit Buy(_tokenID, _account);
     }
 
     function alertPrice(uint256 _tokenID, uint256 _newPrice) external {
@@ -244,7 +242,7 @@ contract Copyright is Photo, Person {
     event Reject(address indexed admin, uint256 indexed tokenID, uint256 time);
     event Ignore(address indexed admin, uint256 indexed tokenID, uint256 time);
     event Pirate(uint256 tokenID, uint256 time);
-    event Buy(address sender, address account, uint256 tokenID, uint256 time);
+    event BuyFT(address indexed sender, address indexed account, uint256 indexed tokenID, uint256 time);
     // 有两类消息：1.盗版认证消息，2.盗版申述消息（算了，不要2，直接增加盗版认证的难度就可以了）
     // tokenID -> [reporters]
     mapping(uint256 => address[]) public MES_reporters; // 举报人集合
@@ -329,7 +327,7 @@ contract Copyright is Photo, Person {
     }
 
     // 传入地址可以为别人购买
-    function buy(uint256 _tokenID, address _account)
+    function buyFT(uint256 _tokenID, address _account)
         external
         payable
         onlyRole(USER)
@@ -355,7 +353,7 @@ contract Copyright is Photo, Person {
         // 5.记录在PER_boughtFT中
         PER_boughtFT[_account].push(_tokenID);
 
-        emit Buy(msg.sender, _account, _tokenID, block.timestamp);
+        emit BuyFT(msg.sender, _account, _tokenID, block.timestamp);
     }
 
     function addFT(
