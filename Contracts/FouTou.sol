@@ -292,14 +292,23 @@ contract Copyright is Photo, Person {
     // tokenID -> [reporters]
     mapping(uint256 => address[]) internal MES_reporters; // 举报人集合
     // tokenID -> reporter -> 是否举报过
-    mapping(uint256 => mapping(address => bool)) public isReported; // 是否举报过一次
+    mapping(uint256 => mapping(address => bool)) internal isReported; // 是否举报过一次
     // 已经提交的认证消息--提交的时间
     mapping(uint256 => uint256) public messageTime;
     uint256[] internal reportedTokenID;
     // tokenID -> 多少管理员同意了，有可能为负，代表拒绝的多一点
     mapping(uint256 => int32) public approveCount;
     // tokenID -> admin -> bool 管理员是否已经处理过该消息了
-    mapping(uint256 => mapping(address => bool)) public isProcessed;
+    mapping(uint256 => mapping(address => bool)) internal isProcessed;
+    mapping(address => uint256[]) internal processed; // 获取某位管理员处理过的所有消息(tokenID)
+
+    function getProcessed(address _account)
+        external
+        view
+        returns (uint256[] memory)
+    {
+        return processed[_account];
+    }
 
     function getMES_reporters(uint256 _tokenID)
         external
@@ -326,20 +335,21 @@ contract Copyright is Photo, Person {
         _;
     }
 
-    function report(address _reporter, uint256 _tokenID)
+    function report(uint256 _tokenID)
         external
         onlyRole(USER)
         greaterFansNum(_tokenID)
     {
-        // 只能举报超过规定粉丝数的博主
-        require(!isReported[_tokenID][_reporter], "already reported");
-        MES_reporters[_tokenID].push(_reporter);
+        // greaterFansNum:只能举报超过规定粉丝数的博主
+
+        require(!isReported[_tokenID][msg.sender], "already reported");
+        MES_reporters[_tokenID].push(msg.sender);
         // ==在刚好达到这个数时只执行一次
         if (MES_reporters[_tokenID].length == REQUIRED_REPOERTER) {
             _submit(_tokenID);
         }
-        isReported[_tokenID][_reporter] = true;
-        emit Report(_reporter, _tokenID, block.timestamp);
+        isReported[_tokenID][msg.sender] = true;
+        emit Report(msg.sender, _tokenID, block.timestamp);
     }
 
     modifier notProcessed(uint256 _tokenID, address _admin) {
@@ -361,6 +371,8 @@ contract Copyright is Photo, Person {
             emit Pirate(_tokenID, block.timestamp);
         }
         isProcessed[_tokenID][msg.sender] = true;
+        processed[msg.sender].push(_tokenID);
+
         emit Approve(msg.sender, _tokenID, block.timestamp);
     }
 
@@ -371,6 +383,8 @@ contract Copyright is Photo, Person {
     {
         approveCount[_tokenID]--;
         isProcessed[_tokenID][msg.sender] = true;
+        processed[msg.sender].push(_tokenID);
+
         emit Reject(msg.sender, _tokenID, block.timestamp);
     }
 
@@ -380,6 +394,8 @@ contract Copyright is Photo, Person {
         notProcessed(_tokenID, msg.sender)
     {
         isProcessed[_tokenID][msg.sender] = true;
+        processed[msg.sender].push(_tokenID);
+
         emit Ignore(msg.sender, _tokenID, block.timestamp);
     }
 
