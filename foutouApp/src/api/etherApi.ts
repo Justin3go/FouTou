@@ -3,7 +3,7 @@ import { ethers } from "ethers";
 import contractABI from "../../../contracts/artifacts/FouTou.json";
 // import { useEtherStore } from "@/store/etherStore"; 非vue组件不能使用pinia
 
-const CONTRACT_ADDRESS = "0x9720d61428dCCDD8E12C545CB3510f746411D7Cb";
+const CONTRACT_ADDRESS = "0x1895bB5d25e394eAAfef505365dc1018b0577C76";
 // debugger
 // const etherStore = useEtherStore();
 
@@ -86,5 +86,257 @@ export const Auth = {
 	publicRegister(account: string): Promise<void> {
 		const { contract } = initContract();
 		return contract.publicRegister(account);
+	},
+};
+export const Photo = {
+	/**
+	 * 根据tokenID查询FT所有信息
+	 * @param tokenID uint256
+	 * @return json  // todo
+	 */
+	getFTinfo(tokenID: number): Promise<string> {
+		const { contract } = initContract();
+		return contract.FTMap(tokenID);
+	},
+	/**
+	 * 根据tokenID查询该FT下所有购买者
+	 * @param tokenID uint256
+	 * @return address[]
+	 */
+	getBuyers(tokenID: number): Promise<Array<string>> {
+		const { contract } = initContract();
+		return contract.getBuyers(tokenID);
+	},
+	/**
+	 * 修改价格
+	 * @param tokenID uint256
+	 * @param newPrice uint256
+	 */
+	alertPrice(tokenID: number, newPrice: number): Promise<void> {
+		const { contract } = initContract();
+		return contract.alertPrice(tokenID, newPrice);
+	},
+	alertDescription(tokenID: number, newDes: string): Promise<void> {
+		const { contract } = initContract();
+		return contract.alertDescription(tokenID, newDes);
+	},
+};
+
+export const Person = {
+	/**
+	 * 获取用户信息
+	 * @param account address
+	 * @return string(json)
+	 */
+	getPER_items(account: string): Promise<string> {
+		const { contract } = initContract();
+		return contract.PER_items(account);
+	},
+	/**
+	 * 获取广告等级和广告图片链接
+	 * @param account address
+	 * @return 1$https://www.example.com
+	 */
+	getPER_ad(account: string): Promise<string> {
+		const { contract } = initContract();
+		return contract.PER_ad(account);
+	},
+	/**
+	 * 获取个人信用值
+	 * @param account address
+	 */
+	getPER_credit(account: string): Promise<number> {
+		const { contract } = initContract();
+		return contract.PER_credit(account);
+	},
+	/**
+	 * 获取个人拥有的FT
+	 * @param account address
+	 * @return [tokenID, tokenID, ...]
+	 */
+	getPER_ownedFT(account: string): Promise<Array<number>> {
+		const { contract } = initContract();
+		return contract.getPER_ownedFT(account);
+	},
+	/**
+	 * 获取个人购买的FT
+	 * @param account address
+	 * @return [tokenID, tokenID, ...]
+	 */
+	getPER_boughtFT(account: string): Promise<Array<number>> {
+		const { contract } = initContract();
+		return contract.getPER_boughtFT(account);
+	},
+	/**
+	 * 获取个人拥有的粉丝
+	 * @param account address
+	 * @return [address, address, ...]
+	 */
+	getPER_fans(account: string): Promise<Array<string>> {
+		const { contract } = initContract();
+		return contract.getPER_fans(account);
+	},
+	/**
+	 * 获取个人拥有的粉丝
+	 * @param account address
+	 * @return [address, address, ...]
+	 */
+	getPER_follow(account: string): Promise<Array<string>> {
+		const { contract } = initContract();
+		return contract.getPER_follow(account);
+	},
+	/**
+	 * 自己修改自己的信息
+	 * @param items string(json)
+	 */
+	alertPER_items(items: string): Promise<void> {
+		const { contract } = initContract();
+		return contract.alertPER_items(items);
+	},
+	/**
+	 * 修改自己的广告等级和广告图片链接
+	 * @param ad <广告等级>$<广告链接>
+	 */
+	alertPER_ad(ad: string): Promise<void> {
+		const { contract } = initContract();
+		return contract.alertPER_ad(ad);
+	},
+	/**
+	 * 降低某位用户的信用分，每位管理员对同一位用户只能操作一次
+	 * @param account address
+	 */
+	reducePER_credit(account: string): Promise<void> {
+		const { contract } = initContract();
+		return contract.reducePER_credit(account);
+	},
+	/**
+	 * 撤销降低，需要之前操作过
+	 * @param account address
+	 */
+	revokeReduce(account: string): Promise<void> {
+		const { contract } = initContract();
+		return contract.revokeReduce(account);
+	},
+};
+// todo internal->private
+export const Copyright = {
+	/**
+	 * 获取举报人数达到，举报消息提交的时间
+	 * @param tokenID uint256
+	 * @return 时间
+	 */
+	getMessageTime(tokenID: number): Promise<number> {
+		const { contract } = initContract();
+		return contract.messageTime(tokenID);
+	},
+	/**
+	 * 获取某消息同意的管理员人数
+	 * @param tokenID uint256
+	 */
+	getApproveCount(tokenID: number): Promise<number> {
+		const { contract } = initContract();
+		return contract.approveCount(tokenID);
+	},
+	/**
+	 * 获取某管理员处理的所有消息
+	 * @param account address
+	 * @return [tokenID, tokenID, ...]
+	 */
+	getProcessed(account: string): Promise<Array<number>> {
+		const { contract } = initContract();
+		return contract.getProcessed(account);
+	},
+	/**
+	 * 获取某FT的所有举报人
+	 * @param tokenID uint256
+	 * @return [address, address, ...]
+	 */
+	getMES_reporters(tokenID: number): Promise<Array<string>> {
+		const { contract } = initContract();
+		return contract.getMES_reporters(tokenID);
+	},
+	/**
+	 * 获取所有已经提交举报的tokenID
+	 * @return [tokenID, tokenID, ...]
+	 */
+	getReportedTokenID(): Promise<Array<number>> {
+		const { contract } = initContract();
+		return contract.getReportedTokenID();
+	},
+	/**
+	 * 举报某件FT
+	 * @param tokenID uint256
+	 */
+	report(tokenID: number): Promise<void> {
+		const { contract } = initContract();
+		return contract.report(tokenID);
+	},
+	/**
+	 * 管理员同意某举报FT的消息
+	 * @param tokenID uint256
+	 */
+	approve(tokenID: number): Promise<void> {
+		const { contract } = initContract();
+		return contract.approve(tokenID);
+	},
+	/**
+	 * 管理员拒绝某举报FT的消息
+	 * @param tokenID uint256
+	 */
+	reject(tokenID: number): Promise<void> {
+		const { contract } = initContract();
+		return contract.reject(tokenID);
+	},
+	/**
+	 * 管理员忽略某举报FT的消息
+	 * @param tokenID uint256
+	 */
+	ignore(tokenID: number): Promise<void> {
+		const { contract } = initContract();
+		return contract.ignore(tokenID);
+	},
+	/**
+	 * 购买某件FT，调用时传入其他人地址就是为别人购买，
+	 * @param tokenID uint256
+	 * @param account address
+	 */
+	buyFT(tokenID: number, account: string): Promise<void> {
+		const { contract } = initContract();
+		return contract.buyFT(tokenID, account);
+	},
+	/**
+	 * 铸造FT
+	 * @param tokenURI 图片链接，需要ipfs
+	 * @param owner address, 可以为自己和他人打造
+	 * @param price uint256
+	 * @param description string
+	 */
+	addFT(
+		tokenURI: string,
+		owner: string,
+		price: number,
+		description: string
+	): Promise<void> {
+		const { contract } = initContract();
+		return contract.addFT(tokenURI, owner, price, description);
+	},
+};
+
+export const Community = {
+	/**
+	 * 关注某位博主
+	 * @param account address 博主的地址
+	 */
+	follow(account: string): Promise<void> {
+		const { contract } = initContract();
+		return contract.follow(account);
+	},
+	/**
+	 * 取消关注某位博主，由于要遍历，消耗的gas可能会很多
+	 * @param account address 博主的地址
+	 */
+	cancelFollow(account: string): Promise<void> {
+		const { contract } = initContract();
+		return contract.cancelFollow(account);
 	},
 };
