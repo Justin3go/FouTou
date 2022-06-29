@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref } from "vue";
 import { useEtherStore } from "@/store/etherStore";
-import { Auth } from "@/api/etherApi";
+import { Auth, Photo } from "@/api/etherApi";
 
 const etherStore = useEtherStore();
 let role = ref("");
@@ -13,6 +13,12 @@ function getRole(): void {
 		console.log("role: ", res);
 		
 	});
+}
+function testGetBuyers(){
+	Photo.getBuyers(0).then((v)=>{
+		console.log(v);
+		
+	})
 }
 
 defineProps<{ msg: string }>();
@@ -31,6 +37,7 @@ const count = ref(0);
 	<input type="text" v-model="account" />
 	<button @click="getRole"></button>
 	<div class="">{{ res }}</div>
+	<button @click="testGetBuyers">getBuyers</button>
 </template>
 
 <style scoped>
