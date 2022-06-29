@@ -6,7 +6,7 @@ import { Auth, Photo } from "@/api/etherApi";
 const etherStore = useEtherStore();
 let role = ref("");
 let account = ref("");
-let res = ref(false);
+let res = ref(import.meta.env.VITE_CONTRACT_ADDRESS);
 function getRole(): void {
 	Auth.verifyRole(role.value, account.value).then((v) => {
 		res.value = v;

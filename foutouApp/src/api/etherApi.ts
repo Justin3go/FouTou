@@ -3,7 +3,7 @@ import { ethers } from "ethers";
 import contractABI from "../../../contracts/artifacts/FouTou.json";
 // import { useEtherStore } from "@/store/etherStore"; 非vue组件不能使用pinia
 
-const CONTRACT_ADDRESS = "0x196133877F3a28b0ec4AED278DE01C874300Fa8C";
+const CONTRACT_ADDRESS = import.meta.env.VITE_CONTRACT_ADDRESS;
 // debugger
 // const etherStore = useEtherStore();
 
