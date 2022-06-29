@@ -24,7 +24,7 @@ contract Auth {
     uint256 public REQUIRED_REPOERTER = 100; // 多少用户举报才会提交申请
     uint256 public REQUIRED_FANS = 500; // 多少粉丝数才有被举报的功能
     uint256 internal FEE = 20; // 除以100，代表5%
-    bool IS_TEST_VERSION = true; // 是否公开注册
+    bool public IS_TEST_VERSION = true; // 是否公开注册
 
     modifier onlyRole(bytes32 _role) {
         require(roles[_role][msg.sender], "not authorized");
