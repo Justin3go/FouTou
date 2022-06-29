@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref } from "vue";
-import { useEtherStore } from "@/store/etherStore";
-import { Auth } from "@/api/etherApi";
+import { useEtherStore } from "@/store/ethereum";
+import { Auth } from "@/api/ethereum";
 
 const etherStore = useEtherStore();
 let role = ref("");
@@ -10,8 +10,6 @@ let res = ref(false);
 function getRole(): void {
 	Auth.verifyRole(role.value, account.value).then((v) => {
 		res.value = v;
-		console.log("role: ", res);
-		
 	});
 }
 
@@ -23,6 +21,7 @@ const count = ref(0);
 	<h1>{{ msg }}</h1>
 	<button
 		v-if="!etherStore.account"
+		class="bg-green-300 rounded p-4"
 		@click="etherStore.connectWallet"
 	>
 		Connect Wallet
@@ -30,7 +29,7 @@ const count = ref(0);
 	<input type="text" v-model="role" />
 	<input type="text" v-model="account" />
 	<button @click="getRole"></button>
-	<div class="">{{ res }}</div>
+	<div class="role-result">{{ res }}</div>
 </template>
 
 <style scoped>
@@ -48,9 +47,5 @@ code {
 	padding: 2px 4px;
 	border-radius: 4px;
 	color: #304455;
-}
-button {
-	width: 100px;
-	height: 25px;
 }
 </style>

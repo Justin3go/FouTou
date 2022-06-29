@@ -1,10 +1,11 @@
 import axios from "axios";
 import { ethers } from "ethers";
 import contractABI from "../../../contracts/artifacts/FouTou.json";
-import { useEtherStore } from "@/store/ethereum";
+// import { useEtherStore } from "@/store/etherStore"; 非vue组件不能使用pinia
 
-const CONTRACT_ADDRESS = "0x13965A9843393d7a4bb2a4b28a83271e6f97BF99";
-const etherStore = useEtherStore();
+const CONTRACT_ADDRESS = "0x9720d61428dCCDD8E12C545CB3510f746411D7Cb";
+// debugger
+// const etherStore = useEtherStore();
 
 function initContract() {
 	const { ethereum } = window;

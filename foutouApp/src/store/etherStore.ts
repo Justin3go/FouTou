@@ -6,7 +6,7 @@ const contractAddress = "0x13965A9843393d7a4bb2a4b28a83271e6f97BF99";
 export const useEtherStore = defineStore("ether", {
 	state: () => {
 		return {
-			account: null,
+			account: '',
 		};
 	},
 	actions: {
