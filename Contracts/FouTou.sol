@@ -124,7 +124,15 @@ contract Photo {
     // tokenID => FT
     mapping(uint256 => FT) public FTMap;
     // tokenID => buyers
-    mapping(uint256 => address[]) public buyers;
+    mapping(uint256 => address[]) internal buyers;
+
+    function getBuyers(uint256 _tokenID)
+        external
+        view
+        returns (address[] memory)
+    {
+        return buyers[_tokenID];
+    }
 
     // 这里的baseXXX()函数仅仅将数据记录在了图片的相关数据结构中，并没有记录在用户的相关数据结构中
     // 但是事件是可以记录了的
@@ -188,15 +196,47 @@ contract Person is Auth {
     mapping(address => string) public PER_items; // string化的json数据，存储个人信息
     mapping(address => string) public PER_ad; // 设置广告等级和广告图片链接，exp:1$http://www.example.com/pic.png
     mapping(address => int8) public PER_credit; // 信誉值 -100~0, 只有减少和撤销减少
-    mapping(address => uint256[]) public PER_ownedFT; // FT只增不删
-    mapping(address => uint256[]) public PER_boughtFT;
-    mapping(address => address[]) public PER_fans;
-    mapping(address => address[]) public PER_follow; // 取关可能消耗很多gas
+    mapping(address => uint256[]) internal PER_ownedFT; // FT只增不删
+    mapping(address => uint256[]) internal PER_boughtFT;
+    mapping(address => address[]) internal PER_fans;
+    mapping(address => address[]) internal PER_follow; // 取关可能消耗很多gas
 
     // 每位管理员对同一位用户只能减少一次信誉分，这里表示是否已经修改过
     mapping(address => mapping(address => bool)) private AlertedCreditLog;
     // 不能重复关注和重复取关，这里记录是否关注
     mapping(address => mapping(address => bool)) internal isFollowed;
+
+    function getPER_ownedFT(address _account)
+        external
+        view
+        returns (uint256[] memory)
+    {
+        return PER_ownedFT[_account];
+    }
+
+    function getPER_boughtFT(address _account)
+        external
+        view
+        returns (uint256[] memory)
+    {
+        return PER_boughtFT[_account];
+    }
+
+    function getPER_fans(address _account)
+        external
+        view
+        returns (address[] memory)
+    {
+        return PER_fans[_account];
+    }
+
+    function getPER_follow(address _account)
+        external
+        view
+        returns (address[] memory)
+    {
+        return PER_follow[_account];
+    }
 
     // 只能自己修改自己的信息
     function alertPER_items(string calldata _items) external onlyRole(USER) {
@@ -242,19 +282,36 @@ contract Copyright is Photo, Person {
     event Reject(address indexed admin, uint256 indexed tokenID, uint256 time);
     event Ignore(address indexed admin, uint256 indexed tokenID, uint256 time);
     event Pirate(uint256 tokenID, uint256 time);
-    event BuyFT(address indexed sender, address indexed account, uint256 indexed tokenID, uint256 time);
+    event BuyFT(
+        address indexed sender,
+        address indexed account,
+        uint256 indexed tokenID,
+        uint256 time
+    );
     // 有两类消息：1.盗版认证消息，2.盗版申述消息（算了，不要2，直接增加盗版认证的难度就可以了）
     // tokenID -> [reporters]
-    mapping(uint256 => address[]) public MES_reporters; // 举报人集合
+    mapping(uint256 => address[]) internal MES_reporters; // 举报人集合
     // tokenID -> reporter -> 是否举报过
     mapping(uint256 => mapping(address => bool)) public isReported; // 是否举报过一次
     // 已经提交的认证消息--提交的时间
     mapping(uint256 => uint256) public messageTime;
-    uint256[] public reportedTokenID;
+    uint256[] internal reportedTokenID;
     // tokenID -> 多少管理员同意了，有可能为负，代表拒绝的多一点
     mapping(uint256 => int32) public approveCount;
     // tokenID -> admin -> bool 管理员是否已经处理过该消息了
     mapping(uint256 => mapping(address => bool)) public isProcessed;
+
+    function getMES_reporters(uint256 _tokenID)
+        external
+        view
+        returns (address[] memory)
+    {
+        return MES_reporters[_tokenID];
+    }
+
+    function getReportedTokenID() external view returns (uint256[] memory) {
+        return reportedTokenID;
+    }
 
     function _submit(uint256 _tokenID) internal {
         reportedTokenID.push(_tokenID);
