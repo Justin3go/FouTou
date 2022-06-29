@@ -64,7 +64,7 @@ contract Auth {
         emit TransferSUPER_ADMIN(msg.sender, _account);
     }
 
-    function _USER2ADMIN(address _account) internal {
+    function _USER2ADMIN(address _account) private {
         require(!roles[ADMIN][_account], "already admin");
         roles[ADMIN][_account] = true;
         emit GrantRole(ADMIN, _account);
@@ -74,7 +74,7 @@ contract Auth {
         _USER2ADMIN(_account);
     }
 
-    function _ADMIN2USER(address _account) internal {
+    function _ADMIN2USER(address _account) private {
         require(roles[ADMIN][_account], "already user");
         roles[ADMIN][_account] = false;
         emit RevokeRole(ADMIN, _account);
@@ -124,7 +124,7 @@ contract Photo {
     // tokenID => FT
     mapping(uint256 => FT) public FTMap;
     // tokenID => buyers
-    mapping(uint256 => address[]) internal buyers;
+    mapping(uint256 => address[]) private buyers;
 
     function getBuyers(uint256 _tokenID)
         external
@@ -290,17 +290,17 @@ contract Copyright is Photo, Person {
     );
     // 有两类消息：1.盗版认证消息，2.盗版申述消息（算了，不要2，直接增加盗版认证的难度就可以了）
     // tokenID -> [reporters]
-    mapping(uint256 => address[]) internal MES_reporters; // 举报人集合
+    mapping(uint256 => address[]) private MES_reporters; // 举报人集合
     // tokenID -> reporter -> 是否举报过
-    mapping(uint256 => mapping(address => bool)) internal isReported; // 是否举报过一次
+    mapping(uint256 => mapping(address => bool)) private isReported; // 是否举报过一次
     // 已经提交的认证消息--提交的时间
     mapping(uint256 => uint256) public messageTime;
-    uint256[] internal reportedTokenID;
+    uint256[] private reportedTokenID;
     // tokenID -> 多少管理员同意了，有可能为负，代表拒绝的多一点
     mapping(uint256 => int32) public approveCount;
     // tokenID -> admin -> bool 管理员是否已经处理过该消息了
-    mapping(uint256 => mapping(address => bool)) internal isProcessed;
-    mapping(address => uint256[]) internal processed; // 获取某位管理员处理过的所有消息(tokenID)
+    mapping(uint256 => mapping(address => bool)) private isProcessed;
+    mapping(address => uint256[]) private processed; // 获取某位管理员处理过的所有消息(tokenID)
 
     function getProcessed(address _account)
         external
@@ -322,7 +322,7 @@ contract Copyright is Photo, Person {
         return reportedTokenID;
     }
 
-    function _submit(uint256 _tokenID) internal {
+    function _submit(uint256 _tokenID) private {
         reportedTokenID.push(_tokenID);
         messageTime[_tokenID] = block.timestamp;
         emit Submit(_tokenID, block.timestamp);
