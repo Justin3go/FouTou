@@ -85,7 +85,7 @@ contract Auth {
     }
 
     function registerByAdmin(address _account) external onlyRole(ADMIN) {
-        require(!roles[USER][_account], "This user is already registered!");
+        require(!roles[USER][_account], "already registered!");
         roles[USER][_account] = true;
         emit Register(msg.sender, _account, block.timestamp);
     }
@@ -93,7 +93,7 @@ contract Auth {
     function publicRegister(address _account) external {
         require(
             !IS_TEST_VERSION,
-            "The registration is not public for the time being. Please contact the administrator to register"
+            "contact the administrator to register"
         );
         roles[USER][_account] = true;
         emit Register(address(0), _account, block.timestamp);
@@ -142,7 +142,7 @@ contract Photo {
         uint256 _price,
         string calldata _description
     ) internal view returns (FT memory ft) {
-        require(_owner != address(0), "owner is address(0)");
+        require(_owner != address(0), "address(0)");
         ft = FT(
             _tokenURI,
             _owner,
@@ -170,7 +170,7 @@ contract Photo {
 
     function alertPrice(uint256 _tokenID, uint256 _newPrice) external {
         FT storage ft = FTMap[_tokenID];
-        require(ft.owner == msg.sender, "You are not this FT's owner");
+        require(ft.owner == msg.sender, "not FT's owner");
         ft.price = _newPrice;
 
         emit AlertPrice(_tokenID, _newPrice, block.timestamp);
@@ -180,7 +180,7 @@ contract Photo {
         external
     {
         FT storage ft = FTMap[_tokenID];
-        require(ft.owner == msg.sender, "You are not this FT's owner");
+        require(ft.owner == msg.sender, "not FT's owner");
         ft.description = _newDes;
 
         emit AlertDescription(_tokenID, _newDes, block.timestamp);
@@ -252,9 +252,9 @@ contract Person is Auth {
     function reducePER_credit(address _account) external onlyRole(ADMIN) {
         require(
             !AlertedCreditLog[msg.sender][_account], // 需要未操作过
-            "Cannot repeat operation for the same user"
+            "Cannot repeat"
         );
-        require(PER_credit[_account] >= -100, "It's already the minimum");
+        require(PER_credit[_account] >= -100, "already the minimum");
         PER_credit[_account]--; // 每次只能减一分
         AlertedCreditLog[msg.sender][_account] = true; // 表示已经修改过了
         emit ReducePER_credit(msg.sender, _account);
@@ -263,7 +263,7 @@ contract Person is Auth {
     function revokeReduce(address _account) external onlyRole(ADMIN) {
         require(
             AlertedCreditLog[msg.sender][_account], // 需要操作过
-            "No operation for this user, cannot revoke"
+            "No operation for this user"
         );
         PER_credit[_account]++;
         AlertedCreditLog[msg.sender][_account] = false;
@@ -412,7 +412,7 @@ contract Copyright is Photo, Person {
         // 2.比较用户支付金额与totalPrice，多退少弃
         require(
             msg.value >= totalPrice,
-            "Transaction failed because of lack of ether."
+            "lack of ether."
         );
         uint256 refund = msg.value - totalPrice;
         if (refund > 0) {
@@ -472,17 +472,5 @@ contract Community is Copyright {
 }
 
 contract FouTou is Community {
-    constructor(
-        uint16 _ADMIN_NUM,
-        int32 _REQUIRED_ADMIN,
-        uint256 _REQUIRED_REPOERTER,
-        uint256 _REQUIRED_FANS,
-        bool _IS_TEST_VERSION
-    ) {
-        ADMIN_NUM = _ADMIN_NUM;
-        REQUIRED_ADMIN = _REQUIRED_ADMIN;
-        REQUIRED_REPOERTER = _REQUIRED_REPOERTER;
-        REQUIRED_FANS = _REQUIRED_FANS;
-        IS_TEST_VERSION = _IS_TEST_VERSION;
-    }
+
 }
