@@ -20,7 +20,8 @@
     "paths":{
       "@": ["src"],
       "@/*": ["src/*"],
-    }
+    },
+		"types": ["element-plus/global"] // 加入类型配置
 	},
 	"include": ["src/**/*.ts", "src/**/*.d.ts", "src/**/*.tsx", "src/**/*.vue"],
 	"references": [{ "path": "./tsconfig.node.json" }]
