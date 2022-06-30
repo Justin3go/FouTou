@@ -340,3 +340,4 @@ export const Community = {
 		return contract.cancelFollow(account);
 	},
 };
+// todo 查出自己关注人的动态，分页展示
