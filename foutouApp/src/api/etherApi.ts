@@ -341,3 +341,22 @@ export const Community = {
 	},
 };
 // todo 查出自己关注人的动态，分页展示
+export const Event = {
+	/**
+	 * 分页查询自己关注的所有博主的动态
+	 * @param account address
+	 * @param page 第几页
+	 * @param size 每页数量
+	 * @return [tokenID, tokenID, ...]
+	 */
+	getAll(account: string, page: number, size: number): Promise<Array<number>> {
+		return Promise.resolve([1]); // todo
+	},
+	/**
+	 * 订阅自己关注的博主之后发布的图片，博主每次发布图片，就将其信息存储到本地(后续可以加一个清除本地缓存的功能)
+	 */
+	subscribe(account: string) {
+		const { contract } = initContract();
+	},
+	unSubscribe(account: string) {},
+};
