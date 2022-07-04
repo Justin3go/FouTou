@@ -5,7 +5,9 @@
 		width="30%"
 		:before-close="handleClose"
 	>
-		<span>你还没有连接你的钱包，请先连接钱包再进行后续操作</span>
+			<img src="/metamask-logo.png" class="wallet-logo" alt="" />
+			<span class="wallet-name">MetaMask</span>
+		<div class="wallet-msg">连接你的钱包，方便进行后续操作</div>
 		<template #footer>
 			<span class="dialog-footer">
 				<el-button @click="dialogVisible = false">取消</el-button>
@@ -71,8 +73,18 @@ async function connect() {
 	dialogVisible.value = false;
 }
 </script>
-<style scoped>
+<style lang="scss" scoped>
 .dialog-footer button:first-child {
 	margin-right: 10px;
+}
+.wallet-logo{
+	width: 2vw
+}
+.wallet-name{
+	font-size: 2vw
+}
+.wallet-msg{
+	margin: 1vw;
+	font-size: 1.3vw;
 }
 </style>
