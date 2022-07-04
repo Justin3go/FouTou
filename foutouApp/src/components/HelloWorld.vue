@@ -1,30 +1,3 @@
-<script setup lang="ts">
-import { ref } from "vue";
-import { useEtherStore } from "@/store/etherStore";
-import { Auth, Photo } from "@/api/etherApi";
-
-const etherStore = useEtherStore();
-let role = ref("");
-let account = ref("");
-let res = ref(import.meta.env.VITE_CONTRACT_ADDRESS);
-function getRole(): void {
-	Auth.verifyRole(role.value, account.value).then((v) => {
-		res.value = v;
-		console.log("role: ", res);
-		
-	});
-}
-function testGetBuyers(){
-	Photo.getBuyers(0).then((v)=>{
-		console.log(v);
-		
-	})
-}
-
-defineProps<{ msg: string }>();
-const count = ref(0);
-</script>
-
 <template>
 	<h1>{{ msg }}</h1>
 	<button
@@ -40,6 +13,32 @@ const count = ref(0);
 	<button @click="testGetBuyers">getBuyers</button>
 </template>
 
+	<script setup lang="ts">
+	import { ref } from "vue";
+	import { useEtherStore } from "@/store/etherStore";
+	import { Auth, Photo } from "@/api/etherApi";
+	
+	const etherStore = useEtherStore();
+	let role = ref("");
+	let account = ref("");
+	let res = ref(import.meta.env.VITE_CONTRACT_ADDRESS);
+	function getRole(): void {
+		Auth.verifyRole(role.value, account.value).then((v) => {
+			res.value = v;
+			console.log("role: ", res);
+			
+		});
+	}
+	function testGetBuyers(){
+		Photo.getBuyers(0).then((v)=>{
+			console.log(v);
+			
+		})
+	}
+	
+	defineProps<{ msg: string }>();
+	const count = ref(0);
+	</script>
 <style scoped>
 a {
 	color: #42b983;

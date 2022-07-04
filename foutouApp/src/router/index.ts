@@ -8,14 +8,19 @@ const routes = [
     component: Start
   },
   {
-    path: '/home',
-    name: 'home',
-    component: () => import('../pages/Home.vue')
+    path: '/browse',
+    name: 'browse',
+    component: () => import('../pages/Browse.vue')
   },
   {
     path: '/personal',
     name: 'personal',
     component: () => import('../pages/Personal.vue')
+  },
+  {
+    path: '/create',
+    name: 'create',
+    component: () => import('../pages/Create.vue')
   }
 ]
 
