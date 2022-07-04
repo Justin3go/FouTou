@@ -22,12 +22,14 @@ interface PER_ITEMS {
  * PER_items(string) ==> json
  * @param items 伪json化的string
  */
-function parsePER_items(items: string): PER_ITEMS {
+export function parsePER_items(items: string): PER_ITEMS {
 	const item = items.split(",");
+	console.log(item);
+	
 	const res: PER_ITEMS = { name: "", description: "", avator: "" };
 	item.forEach((v) => {
 		let i = v.indexOf(":");
-		let resKey = v.slice(1, i);
+		let resKey = v.slice(0, i);
 		let resVal = v.slice(i + 1);
 		res[resKey] = resVal;
 	});
