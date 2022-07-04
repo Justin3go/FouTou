@@ -96,11 +96,11 @@ const elError = () => {
 	});
 };
 async function connect() {
-	if (etherStore.account) {
-		elMsg();
-		dialogVisible.value = false;
-		return;
-	}
+	// if (etherStore.account) {
+	// 	elMsg();
+	// 	dialogVisible.value = false;
+	// 	return;
+	// }  有可能切换账号，所以这里要注释掉
 	await etherStore.connectWallet();
 	etherStore.account ? elSuccess() : elError();
 	dialogVisible.value = false;
