@@ -40,10 +40,6 @@
 import { ref } from "vue";
 import { useRouter } from "vue-router";
 import { useEtherStore } from "@/store/etherStore";
-import { ElMessageBox } from "element-plus";
-import "element-plus/es/components/message-box/style/index";
-import { ElMessage } from "element-plus";
-import "element-plus/es/components/message/style/index";
 
 const etherStore = useEtherStore();
 const dialogVisible = ref(false);
@@ -79,20 +75,20 @@ const handleClose = (done: () => void) => {
 			// catch error
 		});
 };
-const msg1 = () => {
+const elMsg = () => {
 	ElMessage({
 		showClose: true,
 		message: "你的钱包已经连接",
 	});
 };
-const msg2 = () => {
+const elSuccess = () => {
 	ElMessage({
 		showClose: true,
 		message: "连接成功",
 		type: "success",
 	});
 };
-const msg3 = () => {
+const elError = () => {
 	ElMessage({
 		showClose: true,
 		message: "连接失败",
@@ -101,12 +97,12 @@ const msg3 = () => {
 };
 async function connect() {
 	if (etherStore.account) {
-		msg1();
+		elMsg();
 		dialogVisible.value = false;
 		return;
 	}
 	await etherStore.connectWallet();
-	etherStore.account ? msg2() : msg3();
+	etherStore.account ? elSuccess() : elError();
 	dialogVisible.value = false;
 }
 </script>
