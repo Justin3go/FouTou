@@ -16,6 +16,7 @@ interface PER_ITEMS {
 	name: string;
 	description: string;
 	avator: string;
+	twitter: string;
 	[propName: string]: any;
 }
 /**
@@ -25,8 +26,8 @@ interface PER_ITEMS {
 export function parsePER_items(items: string): PER_ITEMS {
 	const item = items.split(",");
 	console.log(item);
-	
-	const res: PER_ITEMS = { name: "", description: "", avator: "" };
+
+	const res: PER_ITEMS = { name: "", description: "", avator: "", twitter: "" };
 	item.forEach((v) => {
 		let i = v.indexOf(":");
 		let resKey = v.slice(0, i);

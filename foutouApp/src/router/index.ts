@@ -30,7 +30,7 @@ const router = createRouter({
 	history: createWebHistory(import.meta.env.BASE_URL),
 	routes,
 });
-
+// todo 后续还要加入角色鉴权的守卫
 router.beforeEach((to, from) => {
 	if (etherStore === null) {
 		etherStore = useEtherStore();

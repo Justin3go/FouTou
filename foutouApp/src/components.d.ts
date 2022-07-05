@@ -5,12 +5,20 @@ import '@vue/runtime-core'
 
 declare module '@vue/runtime-core' {
   export interface GlobalComponents {
+    BoughtList: typeof import('./components/personal/BoughtList.vue')['default']
     ConnectWallet: typeof import('./components/ConnectWallet.vue')['default']
+    CreatedList: typeof import('./components/personal/CreatedList.vue')['default']
     ElButton: typeof import('element-plus/es')['ElButton']
+    ElCol: typeof import('element-plus/es')['ElCol']
     ElDialog: typeof import('element-plus/es')['ElDialog']
     ElMenu: typeof import('element-plus/es')['ElMenu']
     ElMenuItem: typeof import('element-plus/es')['ElMenuItem']
+    ElRow: typeof import('element-plus/es')['ElRow']
+    ElSkeleton: typeof import('element-plus/es')['ElSkeleton']
+    ElSkeletonItem: typeof import('element-plus/es')['ElSkeletonItem']
     ElSubMenu: typeof import('element-plus/es')['ElSubMenu']
+    FansList: typeof import('./components/personal/FansList.vue')['default']
+    FollowList: typeof import('./components/personal/FollowList.vue')['default']
     HelloWorld: typeof import('./components/HelloWorld.vue')['default']
     MyFooter: typeof import('./components/MyFooter.vue')['default']
     MyNav: typeof import('./components/MyNav.vue')['default']
