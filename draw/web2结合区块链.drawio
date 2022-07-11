@@ -1,0 +1,101 @@
+<mxfile host="65bd71144e">
+    <diagram id="d-dQz7VibNVklvIuv3vc" name="第 1 页">
+        <mxGraphModel dx="990" dy="567" grid="1" gridSize="20" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1600" pageHeight="900" math="0" shadow="0">
+            <root>
+                <mxCell id="0"/>
+                <mxCell id="1" parent="0"/>
+                <mxCell id="16" style="edgeStyle=none;html=1;fontSize=18;" edge="1" parent="1" source="2" target="2">
+                    <mxGeometry relative="1" as="geometry">
+                        <mxPoint x="640" y="100" as="targetPoint"/>
+                        <Array as="points">
+                            <mxPoint x="562" y="100"/>
+                            <mxPoint x="640" y="160"/>
+                        </Array>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="2" value="" style="sketch=0;pointerEvents=1;shadow=0;dashed=0;html=1;strokeColor=none;fillColor=#505050;labelPosition=center;verticalLabelPosition=bottom;verticalAlign=top;outlineConnect=0;align=center;shape=mxgraph.office.servers.active_directory_federation_services_proxy;" vertex="1" parent="1">
+                    <mxGeometry x="520" y="212" width="84" height="79" as="geometry"/>
+                </mxCell>
+                <mxCell id="3" value="" style="sketch=0;pointerEvents=1;shadow=0;dashed=0;html=1;strokeColor=none;fillColor=#505050;labelPosition=center;verticalLabelPosition=bottom;verticalAlign=top;outlineConnect=0;align=center;shape=mxgraph.office.servers.datacenter;" vertex="1" parent="1">
+                    <mxGeometry x="720" y="224.5" width="116" height="54" as="geometry"/>
+                </mxCell>
+                <mxCell id="4" value="" style="sketch=0;pointerEvents=1;shadow=0;dashed=0;html=1;strokeColor=none;fillColor=#505050;labelPosition=center;verticalLabelPosition=bottom;verticalAlign=top;outlineConnect=0;align=center;shape=mxgraph.office.sites.blog_site;" vertex="1" parent="1">
+                    <mxGeometry x="320" y="212" width="96" height="79" as="geometry"/>
+                </mxCell>
+                <mxCell id="5" value="" style="sketch=0;pointerEvents=1;shadow=0;dashed=0;html=1;strokeColor=none;fillColor=#505050;labelPosition=center;verticalLabelPosition=bottom;verticalAlign=top;outlineConnect=0;align=center;shape=mxgraph.office.users.dynamic_distribution_group;" vertex="1" parent="1">
+                    <mxGeometry x="140" y="199.5" width="78" height="79" as="geometry"/>
+                </mxCell>
+                <mxCell id="7" value="" style="shape=doubleArrow;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+                    <mxGeometry x="218" y="236.5" width="100" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="8" value="" style="shape=doubleArrow;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+                    <mxGeometry x="416" y="236.5" width="100" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="9" value="" style="shape=doubleArrow;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+                    <mxGeometry x="604" y="239.5" width="100" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="11" value="&lt;font style=&quot;font-size: 18px&quot;&gt;获取主要数据&lt;/font&gt;" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;" vertex="1" parent="1">
+                    <mxGeometry x="584" y="271" width="140" height="20" as="geometry"/>
+                </mxCell>
+                <mxCell id="13" value="中心化服务器" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontSize=18;" vertex="1" parent="1">
+                    <mxGeometry x="492" y="291" width="140" height="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="14" value="以太坊主网" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontSize=18;" vertex="1" parent="1">
+                    <mxGeometry x="720" y="291" width="120" height="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="15" value="进行数据处理" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontSize=18;" vertex="1" parent="1">
+                    <mxGeometry x="604" y="100" width="140" height="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="17" value="接口调用" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontSize=18;" vertex="1" parent="1">
+                    <mxGeometry x="420" y="261" width="100" height="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="18" value="交互" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontSize=18;" vertex="1" parent="1">
+                    <mxGeometry x="238" y="251" width="60" height="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="19" style="edgeStyle=none;html=1;fontSize=18;" edge="1" parent="1">
+                    <mxGeometry relative="1" as="geometry">
+                        <mxPoint x="413.672131147541" y="447" as="targetPoint"/>
+                        <Array as="points">
+                            <mxPoint x="380" y="395"/>
+                            <mxPoint x="458" y="395"/>
+                        </Array>
+                        <mxPoint x="380" y="447" as="sourcePoint"/>
+                    </mxGeometry>
+                </mxCell>
+                <mxCell id="21" value="" style="sketch=0;pointerEvents=1;shadow=0;dashed=0;html=1;strokeColor=none;fillColor=#505050;labelPosition=center;verticalLabelPosition=bottom;verticalAlign=top;outlineConnect=0;align=center;shape=mxgraph.office.servers.datacenter;" vertex="1" parent="1">
+                    <mxGeometry x="520" y="447" width="116" height="54" as="geometry"/>
+                </mxCell>
+                <mxCell id="22" value="" style="sketch=0;pointerEvents=1;shadow=0;dashed=0;html=1;strokeColor=none;fillColor=#505050;labelPosition=center;verticalLabelPosition=bottom;verticalAlign=top;outlineConnect=0;align=center;shape=mxgraph.office.sites.blog_site;" vertex="1" parent="1">
+                    <mxGeometry x="316" y="447" width="96" height="79" as="geometry"/>
+                </mxCell>
+                <mxCell id="23" value="" style="sketch=0;pointerEvents=1;shadow=0;dashed=0;html=1;strokeColor=none;fillColor=#505050;labelPosition=center;verticalLabelPosition=bottom;verticalAlign=top;outlineConnect=0;align=center;shape=mxgraph.office.users.dynamic_distribution_group;" vertex="1" parent="1">
+                    <mxGeometry x="136" y="434.5" width="78" height="79" as="geometry"/>
+                </mxCell>
+                <mxCell id="24" value="" style="shape=doubleArrow;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+                    <mxGeometry x="214" y="471.5" width="100" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="25" value="" style="shape=doubleArrow;whiteSpace=wrap;html=1;" vertex="1" parent="1">
+                    <mxGeometry x="412" y="471.5" width="100" height="30" as="geometry"/>
+                </mxCell>
+                <mxCell id="29" value="以太坊主网" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontSize=18;" vertex="1" parent="1">
+                    <mxGeometry x="520" y="513.5" width="120" height="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="30" value="进行数据处理" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontSize=18;" vertex="1" parent="1">
+                    <mxGeometry x="352" y="360" width="140" height="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="31" value="接口调用" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontSize=18;" vertex="1" parent="1">
+                    <mxGeometry x="416" y="496" width="100" height="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="32" value="交互" style="text;html=1;align=center;verticalAlign=middle;resizable=0;points=[];autosize=1;strokeColor=none;fillColor=none;fontSize=18;" vertex="1" parent="1">
+                    <mxGeometry x="234" y="486" width="60" height="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="33" value="方式一" style="shape=delay;whiteSpace=wrap;html=1;fontSize=18;" vertex="1" parent="1">
+                    <mxGeometry x="56" y="120" width="80" height="40" as="geometry"/>
+                </mxCell>
+                <mxCell id="34" value="方式二" style="shape=delay;whiteSpace=wrap;html=1;fontSize=18;" vertex="1" parent="1">
+                    <mxGeometry x="56" y="360" width="80" height="40" as="geometry"/>
+                </mxCell>
+            </root>
+        </mxGraphModel>
+    </diagram>
+</mxfile>
