@@ -23,10 +23,6 @@
 					<div class="discription">
 						{{ info.items.description }}
 					</div>
-					<div class="count">
-						粉丝:<router-link to="path">{{ info.fans.length }}</router-link>
-						关注:<router-link to="path">{{ info.follow.length }}</router-link>
-					</div>
 				</div>
 			</el-col>
 			<el-col :span="6" :offset="12">
@@ -46,10 +42,10 @@
 			<el-menu-item index="3">粉丝列表</el-menu-item>
 			<el-menu-item index="4">关注列表</el-menu-item>
 		</el-menu>
-		<div v-if="currentIndex === '1'"><created-list></created-list></div>
-		<div v-if="currentIndex === '2'"><bought-list></bought-list></div>
-		<div v-if="currentIndex === '3'"><fans-list></fans-list></div>
-		<div v-if="currentIndex === '4'"><follow-list></follow-list></div>
+		<div v-if="currentIndex === '1'"><created-list :account="etherStore.account"></created-list></div>
+		<div v-if="currentIndex === '2'"><bought-list :account="etherStore.account"></bought-list></div>
+		<div v-if="currentIndex === '3'"><fans-list :account="etherStore.account"></fans-list></div>
+		<div v-if="currentIndex === '4'"><follow-list :account="etherStore.account"></follow-list></div>
 	</div>
 </template>
 <script setup lang="ts">
@@ -73,10 +69,6 @@ const info = reactive({
 	items: { name: "", description: "", avator: "", twitter: "" },
 	ad: {},
 	credit: {},
-	ownedFT: [] as number[],
-	boughtFT: [] as number[],
-	fans: [] as string[],
-	follow: [] as string[],
 });
 const activeIndex = ref("1");
 const currentIndex = ref("1");
@@ -96,11 +88,6 @@ onMounted(async () => {
 
 	info.ad = await Person.getPER_ad(account);
 	credit.value = await Person.getPER_credit(account);
-	// todo 后续把下面4个请求放在各自的子组件中请求
-	info.ownedFT = await Person.getPER_ownedFT(account);
-	info.boughtFT = await Person.getPER_boughtFT(account);
-	info.fans = await Person.getPER_fans(account);
-	info.follow = await Person.getPER_follow(account);
 	loading.value = false;
 });
 </script>
