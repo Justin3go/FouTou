@@ -1,5 +1,6 @@
 <template>
-<h1>Follow List</h1>
+	<h1>Follow List</h1>
+	<h2>{{ info.follow }}</h2>
 </template>
 <script setup lang="ts">
 import { onMounted } from "vue";
