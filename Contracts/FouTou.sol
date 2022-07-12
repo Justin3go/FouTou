@@ -3,8 +3,11 @@
 pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/utils/Counters.sol";
-import "./utils/ArrayLib.sol";
+import "./utils/ArrayLibAddress.sol";
+import "./utils/ArrayLibUint.sol";
 
+// todo1 get分页, 如果页码为0，那么就是getAll
+// todo2 创建的FT和购买的FT接口优化
 contract Auth {
     event GrantRole(bytes32 indexed role, address indexed account);
     event RevokeRole(bytes32 indexed role, address indexed account);
@@ -91,10 +94,7 @@ contract Auth {
     }
 
     function publicRegister(address _account) external {
-        require(
-            !IS_TEST_VERSION,
-            "contact the administrator to register"
-        );
+        require(!IS_TEST_VERSION, "contact the administrator to register");
         roles[USER][_account] = true;
         emit Register(address(0), _account, block.timestamp);
     }
@@ -126,12 +126,25 @@ contract Photo {
     // tokenID => buyers
     mapping(uint256 => address[]) private buyers;
 
-    function getBuyers(uint256 _tokenID)
+    // 相当于后面的每个get都需要有get12，getAll，getLen这三种方法
+    function getAllBuyers(uint256 _tokenID)
         external
         view
         returns (address[] memory)
     {
         return buyers[_tokenID];
+    }
+
+    function get12Buyers(uint256 _tokenID, uint256 page)
+        external
+        view
+        returns (address[12] memory)
+    {
+        return ArrayLibAddress.slice12(buyers[_tokenID], page);
+    }
+
+    function getLenBuyers(uint256 _tokenID) external view returns (uint256) {
+        return buyers[_tokenID].length;
     }
 
     // 这里的baseXXX()函数仅仅将数据记录在了图片的相关数据结构中，并没有记录在用户的相关数据结构中
@@ -206,36 +219,88 @@ contract Person is Auth {
     // 不能重复关注和重复取关，这里记录是否关注
     mapping(address => mapping(address => bool)) internal isFollowed;
 
-    function getPER_ownedFT(address _account)
-        external
-        view
-        returns (uint256[] memory)
-    {
+    function getAllPER_ownedFT(
+        address _account
+    ) external view returns (uint256[] memory) {
         return PER_ownedFT[_account];
     }
 
-    function getPER_boughtFT(address _account)
+    function get12PER_ownedFT(address _account, uint256 page)
         external
         view
-        returns (uint256[] memory)
+        returns (uint256[12] memory)
     {
+        return ArrayLibUint.slice12(PER_ownedFT[_account], page);
+    }
+
+    function getLenPER_ownedFT(address _account)
+        external
+        view
+        returns (uint256)
+    {
+        return PER_ownedFT[_account].length;
+    }
+
+    function getAllPER_boughtFT(
+        address _account
+    ) external view returns (uint256[] memory) {
         return PER_boughtFT[_account];
     }
 
-    function getPER_fans(address _account)
+    function get12PER_boughtFT(address _account, uint256 page)
         external
         view
-        returns (address[] memory)
+        returns (uint256[12] memory)
     {
+        return ArrayLibUint.slice12(PER_boughtFT[_account], page);
+    }
+
+    function getLenPER_boughtFT(address _account)
+        external
+        view
+        returns (uint256)
+    {
+        return PER_boughtFT[_account].length;
+    }
+
+    function getAllPER_fans(
+        address _account
+    ) external view returns (address[] memory) {
         return PER_fans[_account];
     }
 
-    function getPER_follow(address _account)
+    function get12PER_fans(address _account, uint256 page)
         external
         view
-        returns (address[] memory)
+        returns (address[12] memory)
     {
+        return ArrayLibAddress.slice12(PER_fans[_account], page);
+    }
+
+    function getLenPER_fans(address _account) external view returns (uint256) {
+        return PER_fans[_account].length;
+    }
+
+    function getAllPER_follow(
+        address _account
+    ) external view returns (address[] memory) {
         return PER_follow[_account];
+    }
+
+    function get12PER_follow(address _account, uint256 page)
+        external
+        view
+        returns (address[12] memory)
+    {
+        return ArrayLibAddress.slice12(PER_follow[_account], page);
+    }
+
+    function getLenPER_follow(address _account)
+        external
+        view
+        returns (uint256)
+    {
+        return PER_follow[_account].length;
     }
 
     // 只能自己修改自己的信息
@@ -299,25 +364,37 @@ contract Copyright is Photo, Person {
     // tokenID -> 多少管理员同意了，有可能为负，代表拒绝的多一点
     mapping(uint256 => int32) public approveCount;
     // tokenID -> admin -> bool 管理员是否已经处理过该消息了
-    mapping(uint256 => mapping(address => bool)) private isProcessed;
+    mapping(uint256 => mapping(address => bool)) public isProcessed;
     mapping(address => uint256[]) private processed; // 获取某位管理员处理过的所有消息(tokenID)
 
-    function getProcessed(address _account)
-        external
-        view
-        returns (uint256[] memory)
-    {
+    function getProcessed(  // 这个其实可以不用，因为消息动态变化，一般很少，所以直接对每条进行查询isProcessed是否处理就行了
+        address _account 
+    ) external view returns (uint256[] memory) {
         return processed[_account];
     }
 
-    function getMES_reporters(uint256 _tokenID)
-        external
-        view
-        returns (address[] memory)
-    {
+    function getAllMES_reporters(
+        uint256 _tokenID 
+    ) external view returns (address[] memory) {
         return MES_reporters[_tokenID];
     }
 
+    function get12MES_reporters(uint256 _tokenID, uint256 page)
+        external
+        view
+        returns (address[12] memory)
+    {
+        return ArrayLibAddress.slice12(MES_reporters[_tokenID], page);
+    }
+
+    function getLenMES_reporters(uint256 _tokenID)
+        external
+        view
+        returns (uint256)
+    {
+        return MES_reporters[_tokenID].length;
+    }
+    // 这里一般很少，可以不用分页查询
     function getReportedTokenID() external view returns (uint256[] memory) {
         return reportedTokenID;
     }
@@ -368,6 +445,8 @@ contract Copyright is Photo, Person {
         ) {
             // 盗版认证成功
             FTMap[_tokenID].status = true;
+            // 从消息中删除
+            ArrayLibUint.removeByVal(reportedTokenID, _tokenID);
             emit Pirate(_tokenID, block.timestamp);
         }
         isProcessed[_tokenID][msg.sender] = true;
@@ -410,10 +489,7 @@ contract Copyright is Photo, Person {
         uint256 fee = price / FEE;
         uint256 totalPrice = price + fee;
         // 2.比较用户支付金额与totalPrice，多退少弃
-        require(
-            msg.value >= totalPrice,
-            "lack of ether."
-        );
+        require(msg.value >= totalPrice, "lack of ether.");
         uint256 refund = msg.value - totalPrice;
         if (refund > 0) {
             payable(msg.sender).transfer(refund);
@@ -463,14 +539,12 @@ contract Community is Copyright {
     function cancelFollow(address _account) external onlyRole(USER) {
         require(isFollowed[msg.sender][_account], "already not followed");
         // 双方数组互相删除
-        ArrayLib.removeByVal(PER_fans[_account], msg.sender);
-        ArrayLib.removeByVal(PER_follow[msg.sender], _account);
+        ArrayLibAddress.removeByVal(PER_fans[_account], msg.sender);
+        ArrayLibAddress.removeByVal(PER_follow[msg.sender], _account);
 
         isFollowed[msg.sender][_account] = false;
         emit CancelFollow(msg.sender, _account);
     }
 }
 
-contract FouTou is Community {
-
-}
+contract FouTou is Community {}
