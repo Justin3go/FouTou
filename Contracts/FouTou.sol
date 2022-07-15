@@ -6,8 +6,7 @@ import "@openzeppelin/contracts/utils/Counters.sol";
 import "./utils/ArrayLibAddress.sol";
 import "./utils/ArrayLibUint.sol";
 
-// todo1 get分页, 如果页码为0，那么就是getAll
-// todo2 创建的FT和购买的FT接口优化
+// todo2 创建的FT和购买的FT接口优化,应该是可以直接通过接口获取，而不是让我单独写接口
 contract Auth {
     event GrantRole(bytes32 indexed role, address indexed account);
     event RevokeRole(bytes32 indexed role, address indexed account);
@@ -16,10 +15,9 @@ contract Auth {
     // role -> account -> bool : 判断某个账户是否属于该角色
     mapping(bytes32 => mapping(address => bool)) public roles;
 
-    bytes32 internal constant SUPER_ADMIN =
-        keccak256(abi.encodePacked("SUPER_ADMIN"));
-    bytes32 internal constant ADMIN = keccak256(abi.encodePacked("ADMIN"));
-    bytes32 internal constant USER = keccak256(abi.encodePacked("USER"));
+    bytes4 internal constant SUPER_ADMIN = bytes4('1');
+    bytes4 internal constant ADMIN = bytes4('2');
+    bytes4 internal constant USER = bytes4('3');
 
     // 设置一些定量以后使用
     uint16 public ADMIN_NUM = 30; // 预计管理员数量
@@ -30,7 +28,7 @@ contract Auth {
     bool public IS_TEST_VERSION = true; // 是否公开注册
 
     modifier onlyRole(bytes32 _role) {
-        require(roles[_role][msg.sender], "not authorized");
+        require(roles[_role][msg.sender], "1");
         _;
     }
 
@@ -40,8 +38,6 @@ contract Auth {
         roles[USER][msg.sender] = true;
         // LOG中零地址到某个地址代表：记录部署合约的人成为超级管理员的事件
         emit TransferSUPER_ADMIN(address(0), msg.sender);
-        emit GrantRole(USER, msg.sender);
-        emit Register(msg.sender, msg.sender, block.timestamp);
     }
 
     function setConfig(
@@ -68,7 +64,7 @@ contract Auth {
     }
 
     function _USER2ADMIN(address _account) private {
-        require(!roles[ADMIN][_account], "already admin");
+        require(!roles[ADMIN][_account], "2");
         roles[ADMIN][_account] = true;
         emit GrantRole(ADMIN, _account);
     }
@@ -78,7 +74,7 @@ contract Auth {
     }
 
     function _ADMIN2USER(address _account) private {
-        require(roles[ADMIN][_account], "already user");
+        require(roles[ADMIN][_account], "3");
         roles[ADMIN][_account] = false;
         emit RevokeRole(ADMIN, _account);
     }
@@ -88,13 +84,13 @@ contract Auth {
     }
 
     function registerByAdmin(address _account) external onlyRole(ADMIN) {
-        require(!roles[USER][_account], "already registered!");
+        require(!roles[USER][_account], "4");
         roles[USER][_account] = true;
         emit Register(msg.sender, _account, block.timestamp);
     }
 
     function publicRegister(address _account) external {
-        require(!IS_TEST_VERSION, "contact the administrator to register");
+        require(!IS_TEST_VERSION, "5");
         roles[USER][_account] = true;
         emit Register(address(0), _account, block.timestamp);
     }
@@ -127,13 +123,7 @@ contract Photo {
     mapping(uint256 => address[]) private buyers;
 
     // 相当于后面的每个get都需要有get12，getAll，getLen这三种方法
-    function getAllBuyers(uint256 _tokenID)
-        external
-        view
-        returns (address[] memory)
-    {
-        return buyers[_tokenID];
-    }
+    // 不需要getAll的函数
 
     function get12Buyers(uint256 _tokenID, uint256 page)
         external
@@ -155,7 +145,7 @@ contract Photo {
         uint256 _price,
         string calldata _description
     ) internal view returns (FT memory ft) {
-        require(_owner != address(0), "address(0)");
+        require(_owner != address(0), "6");
         ft = FT(
             _tokenURI,
             _owner,
@@ -177,13 +167,12 @@ contract Photo {
     }
 
     function _baseBuy(uint256 _tokenID, address _account) internal {
-        address[] storage _buyers = buyers[_tokenID];
-        _buyers.push(_account);
+        buyers[_tokenID].push(_account);
     }
 
     function alertPrice(uint256 _tokenID, uint256 _newPrice) external {
         FT storage ft = FTMap[_tokenID];
-        require(ft.owner == msg.sender, "not FT's owner");
+        require(ft.owner == msg.sender, "7");
         ft.price = _newPrice;
 
         emit AlertPrice(_tokenID, _newPrice, block.timestamp);
@@ -193,7 +182,7 @@ contract Photo {
         external
     {
         FT storage ft = FTMap[_tokenID];
-        require(ft.owner == msg.sender, "not FT's owner");
+        require(ft.owner == msg.sender, "7");
         ft.description = _newDes;
 
         emit AlertDescription(_tokenID, _newDes, block.timestamp);
@@ -219,12 +208,6 @@ contract Person is Auth {
     // 不能重复关注和重复取关，这里记录是否关注
     mapping(address => mapping(address => bool)) internal isFollowed;
 
-    function getAllPER_ownedFT(
-        address _account
-    ) external view returns (uint256[] memory) {
-        return PER_ownedFT[_account];
-    }
-
     function get12PER_ownedFT(address _account, uint256 page)
         external
         view
@@ -239,12 +222,6 @@ contract Person is Auth {
         returns (uint256)
     {
         return PER_ownedFT[_account].length;
-    }
-
-    function getAllPER_boughtFT(
-        address _account
-    ) external view returns (uint256[] memory) {
-        return PER_boughtFT[_account];
     }
 
     function get12PER_boughtFT(address _account, uint256 page)
@@ -263,12 +240,6 @@ contract Person is Auth {
         return PER_boughtFT[_account].length;
     }
 
-    function getAllPER_fans(
-        address _account
-    ) external view returns (address[] memory) {
-        return PER_fans[_account];
-    }
-
     function get12PER_fans(address _account, uint256 page)
         external
         view
@@ -279,12 +250,6 @@ contract Person is Auth {
 
     function getLenPER_fans(address _account) external view returns (uint256) {
         return PER_fans[_account].length;
-    }
-
-    function getAllPER_follow(
-        address _account
-    ) external view returns (address[] memory) {
-        return PER_follow[_account];
     }
 
     function get12PER_follow(address _account, uint256 page)
@@ -317,9 +282,9 @@ contract Person is Auth {
     function reducePER_credit(address _account) external onlyRole(ADMIN) {
         require(
             !AlertedCreditLog[msg.sender][_account], // 需要未操作过
-            "Cannot repeat"
+            "8"
         );
-        require(PER_credit[_account] >= -100, "already the minimum");
+        require(PER_credit[_account] >= -100, "9");
         PER_credit[_account]--; // 每次只能减一分
         AlertedCreditLog[msg.sender][_account] = true; // 表示已经修改过了
         emit ReducePER_credit(msg.sender, _account);
@@ -328,7 +293,7 @@ contract Person is Auth {
     function revokeReduce(address _account) external onlyRole(ADMIN) {
         require(
             AlertedCreditLog[msg.sender][_account], // 需要操作过
-            "No operation for this user"
+            "10"
         );
         PER_credit[_account]++;
         AlertedCreditLog[msg.sender][_account] = false;
@@ -367,18 +332,6 @@ contract Copyright is Photo, Person {
     mapping(uint256 => mapping(address => bool)) public isProcessed;
     mapping(address => uint256[]) private processed; // 获取某位管理员处理过的所有消息(tokenID)
 
-    function getProcessed(  // 这个其实可以不用，因为消息动态变化，一般很少，所以直接对每条进行查询isProcessed是否处理就行了
-        address _account 
-    ) external view returns (uint256[] memory) {
-        return processed[_account];
-    }
-
-    function getAllMES_reporters(
-        uint256 _tokenID 
-    ) external view returns (address[] memory) {
-        return MES_reporters[_tokenID];
-    }
-
     function get12MES_reporters(uint256 _tokenID, uint256 page)
         external
         view
@@ -394,6 +347,7 @@ contract Copyright is Photo, Person {
     {
         return MES_reporters[_tokenID].length;
     }
+
     // 这里一般很少，可以不用分页查询
     function getReportedTokenID() external view returns (uint256[] memory) {
         return reportedTokenID;
@@ -408,7 +362,7 @@ contract Copyright is Photo, Person {
     modifier greaterFansNum(uint256 _tokenID) {
         address owner = FTMap[_tokenID].owner;
         uint256 fans = PER_fans[owner].length;
-        require(fans >= REQUIRED_FANS, "less required fans");
+        require(fans >= REQUIRED_FANS, "11");
         _;
     }
 
@@ -419,7 +373,7 @@ contract Copyright is Photo, Person {
     {
         // greaterFansNum:只能举报超过规定粉丝数的博主
 
-        require(!isReported[_tokenID][msg.sender], "already reported");
+        require(!isReported[_tokenID][msg.sender], "12");
         MES_reporters[_tokenID].push(msg.sender);
         // ==在刚好达到这个数时只执行一次
         if (MES_reporters[_tokenID].length == REQUIRED_REPOERTER) {
@@ -430,7 +384,7 @@ contract Copyright is Photo, Person {
     }
 
     modifier notProcessed(uint256 _tokenID, address _admin) {
-        require(!isProcessed[_tokenID][_admin], "already processed");
+        require(!isProcessed[_tokenID][_admin], "13");
         _;
     }
 
@@ -489,7 +443,7 @@ contract Copyright is Photo, Person {
         uint256 fee = price / FEE;
         uint256 totalPrice = price + fee;
         // 2.比较用户支付金额与totalPrice，多退少弃
-        require(msg.value >= totalPrice, "lack of ether.");
+        require(msg.value >= totalPrice, "14");
         uint256 refund = msg.value - totalPrice;
         if (refund > 0) {
             payable(msg.sender).transfer(refund);
@@ -511,9 +465,7 @@ contract Copyright is Photo, Person {
         uint256 _price,
         string calldata _description
     ) external onlyRole(USER) {
-        FT memory ft = _baseMint(_tokenURI, _owner, _price, _description);
-        uint256 newTokenID = _bindTokenID(ft);
-        PER_ownedFT[_owner].push(newTokenID);
+        PER_ownedFT[_owner].push(_bindTokenID(_baseMint(_tokenURI, _owner, _price, _description)));
         // bind 里面已经触发了事件了
     }
 
@@ -527,7 +479,7 @@ contract Community is Copyright {
     event CancelFollow(address indexed sender, address indexed account);
 
     function follow(address _account) external onlyRole(USER) {
-        require(!isFollowed[msg.sender][_account], "already followed");
+        require(!isFollowed[msg.sender][_account], "15");
         // 双方数组互相添加
         PER_fans[_account].push(msg.sender);
         PER_follow[msg.sender].push(_account);
@@ -537,7 +489,7 @@ contract Community is Copyright {
     }
 
     function cancelFollow(address _account) external onlyRole(USER) {
-        require(isFollowed[msg.sender][_account], "already not followed");
+        require(isFollowed[msg.sender][_account], "16");
         // 双方数组互相删除
         ArrayLibAddress.removeByVal(PER_fans[_account], msg.sender);
         ArrayLibAddress.removeByVal(PER_follow[msg.sender], _account);

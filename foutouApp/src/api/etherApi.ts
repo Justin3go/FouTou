@@ -22,7 +22,7 @@ function initContract() {
 		throw "Ethereum object doesn't exist!";
 	}
 }
-
+// todo 合约中新增的get方法加入其中
 export const Auth = {
 	/**
 	 * 验证某个账户是否属于某个角色(SUPER_ADMIN, ADMIN, USER)
