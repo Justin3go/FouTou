@@ -15,9 +15,9 @@ contract Auth {
     // role -> account -> bool : 判断某个账户是否属于该角色
     mapping(bytes32 => mapping(address => bool)) public roles;
 
-    bytes4 internal constant SUPER_ADMIN = bytes4('1');
-    bytes4 internal constant ADMIN = bytes4('2');
-    bytes4 internal constant USER = bytes4('3');
+    bytes4 internal constant SUPER_ADMIN = bytes4("1");
+    bytes4 internal constant ADMIN = bytes4("2");
+    bytes4 internal constant USER = bytes4("3");
 
     // 设置一些定量以后使用
     uint16 public ADMIN_NUM = 30; // 预计管理员数量
@@ -97,7 +97,7 @@ contract Auth {
 }
 
 contract Photo {
-    event AddFT(FT ft, uint256 tokenID);
+    event CreateFT(address indexed account, uint256 indexed tokenID, FT ft);
     event AlertPrice(uint256 indexed tokenID, uint256 newPrice, uint256 time);
     event AlertDescription(
         uint256 indexed tokenID,
@@ -122,21 +122,6 @@ contract Photo {
     // tokenID => buyers
     mapping(uint256 => address[]) private buyers;
 
-    // 相当于后面的每个get都需要有get12，getAll，getLen这三种方法
-    // 不需要getAll的函数
-
-    function get12Buyers(uint256 _tokenID, uint256 page)
-        external
-        view
-        returns (address[12] memory)
-    {
-        return ArrayLibAddress.slice12(buyers[_tokenID], page);
-    }
-
-    function getLenBuyers(uint256 _tokenID) external view returns (uint256) {
-        return buyers[_tokenID].length;
-    }
-
     // 这里的baseXXX()函数仅仅将数据记录在了图片的相关数据结构中，并没有记录在用户的相关数据结构中
     // 但是事件是可以记录了的
     function _baseMint(
@@ -160,7 +145,7 @@ contract Photo {
     function _bindTokenID(FT memory ft) internal returns (uint256) {
         uint256 newTokenID = _tokenIds.current();
         FTMap[newTokenID] = ft;
-        emit AddFT(ft, newTokenID);
+        emit CreateFT(msg.sender, newTokenID, ft);
 
         _tokenIds.increment();
         return newTokenID; // 返回的是当前绑定的ID
@@ -207,66 +192,6 @@ contract Person is Auth {
     mapping(address => mapping(address => bool)) private AlertedCreditLog;
     // 不能重复关注和重复取关，这里记录是否关注
     mapping(address => mapping(address => bool)) internal isFollowed;
-
-    function get12PER_ownedFT(address _account, uint256 page)
-        external
-        view
-        returns (uint256[12] memory)
-    {
-        return ArrayLibUint.slice12(PER_ownedFT[_account], page);
-    }
-
-    function getLenPER_ownedFT(address _account)
-        external
-        view
-        returns (uint256)
-    {
-        return PER_ownedFT[_account].length;
-    }
-
-    function get12PER_boughtFT(address _account, uint256 page)
-        external
-        view
-        returns (uint256[12] memory)
-    {
-        return ArrayLibUint.slice12(PER_boughtFT[_account], page);
-    }
-
-    function getLenPER_boughtFT(address _account)
-        external
-        view
-        returns (uint256)
-    {
-        return PER_boughtFT[_account].length;
-    }
-
-    function get12PER_fans(address _account, uint256 page)
-        external
-        view
-        returns (address[12] memory)
-    {
-        return ArrayLibAddress.slice12(PER_fans[_account], page);
-    }
-
-    function getLenPER_fans(address _account) external view returns (uint256) {
-        return PER_fans[_account].length;
-    }
-
-    function get12PER_follow(address _account, uint256 page)
-        external
-        view
-        returns (address[12] memory)
-    {
-        return ArrayLibAddress.slice12(PER_follow[_account], page);
-    }
-
-    function getLenPER_follow(address _account)
-        external
-        view
-        returns (uint256)
-    {
-        return PER_follow[_account].length;
-    }
 
     // 只能自己修改自己的信息
     function alertPER_items(string calldata _items) external onlyRole(USER) {
@@ -331,27 +256,6 @@ contract Copyright is Photo, Person {
     // tokenID -> admin -> bool 管理员是否已经处理过该消息了
     mapping(uint256 => mapping(address => bool)) public isProcessed;
     mapping(address => uint256[]) private processed; // 获取某位管理员处理过的所有消息(tokenID)
-
-    function get12MES_reporters(uint256 _tokenID, uint256 page)
-        external
-        view
-        returns (address[12] memory)
-    {
-        return ArrayLibAddress.slice12(MES_reporters[_tokenID], page);
-    }
-
-    function getLenMES_reporters(uint256 _tokenID)
-        external
-        view
-        returns (uint256)
-    {
-        return MES_reporters[_tokenID].length;
-    }
-
-    // 这里一般很少，可以不用分页查询
-    function getReportedTokenID() external view returns (uint256[] memory) {
-        return reportedTokenID;
-    }
 
     function _submit(uint256 _tokenID) private {
         reportedTokenID.push(_tokenID);
@@ -459,13 +363,15 @@ contract Copyright is Photo, Person {
         emit BuyFT(msg.sender, _account, _tokenID, block.timestamp);
     }
 
-    function addFT(
+    function createFT(
         string calldata _tokenURI,
         address payable _owner,
         uint256 _price,
         string calldata _description
     ) external onlyRole(USER) {
-        PER_ownedFT[_owner].push(_bindTokenID(_baseMint(_tokenURI, _owner, _price, _description)));
+        PER_ownedFT[_owner].push(
+            _bindTokenID(_baseMint(_tokenURI, _owner, _price, _description))
+        );
         // bind 里面已经触发了事件了
     }
 
