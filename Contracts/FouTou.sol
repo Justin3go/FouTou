@@ -7,6 +7,7 @@ import "./utils/ArrayLibAddress.sol";
 import "./utils/ArrayLibUint.sol";
 
 // todo2 创建的FT和购买的FT接口优化,应该是可以直接通过接口获取，而不是让我单独写接口
+// todo 需要重构event存储时间，因为有可能事件发生的时间可以直接查询到
 contract Auth {
     event GrantRole(bytes32 indexed role, address indexed account);
     event RevokeRole(bytes32 indexed role, address indexed account);
@@ -15,9 +16,10 @@ contract Auth {
     // role -> account -> bool : 判断某个账户是否属于该角色
     mapping(bytes32 => mapping(address => bool)) public roles;
 
-    bytes4 internal constant SUPER_ADMIN = bytes4("1");
-    bytes4 internal constant ADMIN = bytes4("2");
-    bytes4 internal constant USER = bytes4("3");
+    bytes32 internal constant SUPER_ADMIN =
+        keccak256(abi.encodePacked("SUPER_ADMIN"));
+    bytes32 internal constant ADMIN = keccak256(abi.encodePacked("ADMIN"));
+    bytes32 internal constant USER = keccak256(abi.encodePacked("USER"));
 
     // 设置一些定量以后使用
     uint16 public ADMIN_NUM = 30; // 预计管理员数量
