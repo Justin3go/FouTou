@@ -6,8 +6,9 @@ import "@openzeppelin/contracts/utils/Counters.sol";
 import "./utils/ArrayLibAddress.sol";
 import "./utils/ArrayLibUint.sol";
 
-// todo2 创建的FT和购买的FT接口优化,应该是可以直接通过接口获取，而不是让我单独写接口
 // todo 需要重构event存储时间，因为有可能事件发生的时间可以直接查询到
+
+// * 虽然我可以通过事件查询到是谁创造了FT，但是我们还是应该将其记录在FT结构体的记录中
 contract Auth {
     event GrantRole(bytes32 indexed role, address indexed account);
     event RevokeRole(bytes32 indexed role, address indexed account);
@@ -243,6 +244,7 @@ contract Copyright is Photo, Person {
         address indexed sender,
         address indexed account,
         uint256 indexed tokenID,
+        FT ft,
         uint256 time
     );
     // 有两类消息：1.盗版认证消息，2.盗版申述消息（算了，不要2，直接增加盗版认证的难度就可以了）
@@ -362,7 +364,13 @@ contract Copyright is Photo, Person {
         // 5.记录在PER_boughtFT中
         PER_boughtFT[_account].push(_tokenID);
 
-        emit BuyFT(msg.sender, _account, _tokenID, block.timestamp);
+        emit BuyFT(
+            msg.sender,
+            _account,
+            _tokenID,
+            FTMap[_tokenID],
+            block.timestamp
+        );
     }
 
     function createFT(
