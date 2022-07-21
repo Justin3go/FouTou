@@ -7,13 +7,16 @@ import "./utils/ArrayLibAddress.sol";
 import "./utils/ArrayLibUint.sol";
 
 // todo 需要重构event存储时间，因为有可能事件发生的时间可以直接查询到
-
+// todo 不知道事件两个参数是不是可以不用加indexed，如果是，则又需要更改
+// todo 记得加一个提钱的方法
 // * 虽然我可以通过事件查询到是谁创造了FT，但是我们还是应该将其记录在FT结构体的记录中
 contract Auth {
-    event GrantRole(bytes32 indexed role, address indexed account);
-    event RevokeRole(bytes32 indexed role, address indexed account);
+    // * 查询管理员有哪些就是Grant-Revoke，这里根据社区合约部分，也合并一下... 
+    // event GrantAdmin(address account);
+    // event RevokeAdmin(address account);
+    event TransferAdmin(address account, bool indexed GrantOrRevoke);
     event TransferSUPER_ADMIN(address oldAccount, address newAccount);
-    event Register(address indexed admin, address account, uint256 time);
+    event Register(address indexed admin, address account);
     // role -> account -> bool : 判断某个账户是否属于该角色
     mapping(bytes32 => mapping(address => bool)) public roles;
 
@@ -69,7 +72,7 @@ contract Auth {
     function _USER2ADMIN(address _account) private {
         require(!roles[ADMIN][_account], "2");
         roles[ADMIN][_account] = true;
-        emit GrantRole(ADMIN, _account);
+        emit TransferAdmin(_account, true);
     }
 
     function USER2ADMIN(address _account) external onlyRole(SUPER_ADMIN) {
@@ -79,7 +82,7 @@ contract Auth {
     function _ADMIN2USER(address _account) private {
         require(roles[ADMIN][_account], "3");
         roles[ADMIN][_account] = false;
-        emit RevokeRole(ADMIN, _account);
+        emit TransferAdmin(_account, false);
     }
 
     function ADMIN2USER(address _account) external onlyRole(SUPER_ADMIN) {
@@ -89,23 +92,23 @@ contract Auth {
     function registerByAdmin(address _account) external onlyRole(ADMIN) {
         require(!roles[USER][_account], "4");
         roles[USER][_account] = true;
-        emit Register(msg.sender, _account, block.timestamp);
+        emit Register(msg.sender, _account);
     }
 
     function publicRegister(address _account) external {
         require(!IS_TEST_VERSION, "5");
+        require(!roles[USER][_account], "4");
         roles[USER][_account] = true;
-        emit Register(address(0), _account, block.timestamp);
+        emit Register(address(0), _account);
     }
 }
 
 contract Photo {
     event CreateFT(address indexed account, uint256 indexed tokenID, FT ft);
-    event AlertPrice(uint256 indexed tokenID, uint256 newPrice, uint256 time);
+    event AlertPrice(uint256 indexed tokenID, uint256 newPrice);
     event AlertDescription(
         uint256 indexed tokenID,
-        string newDes,
-        uint256 time
+        string newDes
     );
 
     using Counters for Counters.Counter;
@@ -117,22 +120,20 @@ contract Photo {
         bool status; // false: 正常，ture: 盗版
         uint256 reportCount; // 举报数
         uint256 price;
-        uint256 uploadtime;
         string description; // string化的json数组，由前端解析。
     }
     // tokenID => FT
     mapping(uint256 => FT) public FTMap;
     // tokenID => buyers
-    mapping(uint256 => address[]) private buyers;
+    mapping(uint256 => address[]) public buyers;
 
     // 这里的baseXXX()函数仅仅将数据记录在了图片的相关数据结构中，并没有记录在用户的相关数据结构中
-    // 但是事件是可以记录了的
     function _baseMint(
         string calldata _tokenURI,
         address payable _owner,
         uint256 _price,
         string calldata _description
-    ) internal view returns (FT memory ft) {
+    ) internal pure returns (FT memory ft) {
         require(_owner != address(0), "6");
         ft = FT(
             _tokenURI,
@@ -140,7 +141,6 @@ contract Photo {
             false,
             0,
             _price,
-            block.timestamp,
             _description
         );
     }
@@ -163,7 +163,7 @@ contract Photo {
         require(ft.owner == msg.sender, "7");
         ft.price = _newPrice;
 
-        emit AlertPrice(_tokenID, _newPrice, block.timestamp);
+        emit AlertPrice(_tokenID, _newPrice);
     }
 
     function alertDescription(uint256 _tokenID, string calldata _newDes)
@@ -173,15 +173,17 @@ contract Photo {
         require(ft.owner == msg.sender, "7");
         ft.description = _newDes;
 
-        emit AlertDescription(_tokenID, _newDes, block.timestamp);
+        emit AlertDescription(_tokenID, _newDes);
     }
 }
 
 contract Person is Auth {
     event AlertPER_items(address indexed account, string newItems);
     event AlertPER_ad(address indexed account, string newAd);
-    event ReducePER_credit(address indexed admin, address indexed account);
-    event RevokeReduce(address indexed admin, address indexed account);
+    // 这类事件其实都可以合并一下
+    // event ReducePER_credit(address indexed admin, address indexed account);
+    // event RevokeReduce(address indexed admin, address indexed account);
+    event AlertCredit(address indexed admin, address indexed account, bool reduceOrRevoke);
     // 用户信息
     mapping(address => string) public PER_items; // string化的json数据，存储个人信息
     mapping(address => string) public PER_ad; // 设置广告等级和广告图片链接，exp:1$http://www.example.com/pic.png
@@ -215,7 +217,7 @@ contract Person is Auth {
         require(PER_credit[_account] >= -100, "9");
         PER_credit[_account]--; // 每次只能减一分
         AlertedCreditLog[msg.sender][_account] = true; // 表示已经修改过了
-        emit ReducePER_credit(msg.sender, _account);
+        emit AlertCredit(msg.sender, _account, true);
     }
 
     function revokeReduce(address _account) external onlyRole(ADMIN) {
@@ -225,46 +227,48 @@ contract Person is Auth {
         );
         PER_credit[_account]++;
         AlertedCreditLog[msg.sender][_account] = false;
-        emit RevokeReduce(msg.sender, _account);
+        emit AlertCredit(msg.sender, _account, false);
     }
 }
 
 contract Copyright is Photo, Person {
-    event Submit(uint256 tokenID, uint256 time);
+    event Submit(uint256 tokenID);
     event Report(
         address indexed reporter,
-        uint256 indexed tokenID,
-        uint256 time
+        uint256 indexed tokenID
     );
-    event Approve(address indexed admin, uint256 indexed tokenID, uint256 time);
-    event Reject(address indexed admin, uint256 indexed tokenID, uint256 time);
-    event Ignore(address indexed admin, uint256 indexed tokenID, uint256 time);
-    event Pirate(uint256 tokenID, uint256 time);
+    // action: 1->approve, 2->reject, 3->ignore
+    event ProcessAction(address indexed admin, uint256 indexed tokenID, uint8 approve1reject2ignore3);
+    // event Approve(address indexed admin, uint256 indexed tokenID);
+    // event Reject(address indexed admin, uint256 indexed tokenID);
+    // event Ignore(address indexed admin, uint256 indexed tokenID);
+    event Pirate(uint256 tokenID);
     event BuyFT(
         address indexed sender,
         address indexed account,
         uint256 indexed tokenID,
-        FT ft,
-        uint256 time
+        FT ft
     );
     // 有两类消息：1.盗版认证消息，2.盗版申述消息（算了，不要2，直接增加盗版认证的难度就可以了）
     // tokenID -> [reporters]
-    mapping(uint256 => address[]) private MES_reporters; // 举报人集合
+    mapping(uint256 => address[]) public MES_reporters; // 举报人集合
     // tokenID -> reporter -> 是否举报过
     mapping(uint256 => mapping(address => bool)) private isReported; // 是否举报过一次
-    // 已经提交的认证消息--提交的时间
-    mapping(uint256 => uint256) public messageTime;
     uint256[] private reportedTokenID;
     // tokenID -> 多少管理员同意了，有可能为负，代表拒绝的多一点
     mapping(uint256 => int32) public approveCount;
     // tokenID -> admin -> bool 管理员是否已经处理过该消息了
     mapping(uint256 => mapping(address => bool)) public isProcessed;
-    mapping(address => uint256[]) private processed; // 获取某位管理员处理过的所有消息(tokenID)
+    mapping(address => uint256[]) public processed; // 获取某位管理员处理过的所有消息(tokenID)
+
+    // 数组的获取不能用public，而要单独写一个函数返回（一般来说，这个数组会很小）
+    function getReportedTokenID() external view returns (uint256[] memory) {
+        return reportedTokenID;
+    }
 
     function _submit(uint256 _tokenID) private {
         reportedTokenID.push(_tokenID);
-        messageTime[_tokenID] = block.timestamp;
-        emit Submit(_tokenID, block.timestamp);
+        emit Submit(_tokenID);
     }
 
     modifier greaterFansNum(uint256 _tokenID) {
@@ -288,7 +292,7 @@ contract Copyright is Photo, Person {
             _submit(_tokenID);
         }
         isReported[_tokenID][msg.sender] = true;
-        emit Report(msg.sender, _tokenID, block.timestamp);
+        emit Report(msg.sender, _tokenID);
     }
 
     modifier notProcessed(uint256 _tokenID, address _admin) {
@@ -309,12 +313,12 @@ contract Copyright is Photo, Person {
             FTMap[_tokenID].status = true;
             // 从消息中删除
             ArrayLibUint.removeByVal(reportedTokenID, _tokenID);
-            emit Pirate(_tokenID, block.timestamp);
+            emit Pirate(_tokenID);
         }
         isProcessed[_tokenID][msg.sender] = true;
         processed[msg.sender].push(_tokenID);
 
-        emit Approve(msg.sender, _tokenID, block.timestamp);
+        emit ProcessAction(msg.sender, _tokenID, 1);
     }
 
     function reject(uint256 _tokenID)
@@ -326,7 +330,7 @@ contract Copyright is Photo, Person {
         isProcessed[_tokenID][msg.sender] = true;
         processed[msg.sender].push(_tokenID);
 
-        emit Reject(msg.sender, _tokenID, block.timestamp);
+        emit ProcessAction(msg.sender, _tokenID, 2);
     }
 
     function ignore(uint256 _tokenID)
@@ -337,7 +341,7 @@ contract Copyright is Photo, Person {
         isProcessed[_tokenID][msg.sender] = true;
         processed[msg.sender].push(_tokenID);
 
-        emit Ignore(msg.sender, _tokenID, block.timestamp);
+        emit ProcessAction(msg.sender, _tokenID, 3);
     }
 
     // 传入地址可以为别人购买
@@ -368,8 +372,7 @@ contract Copyright is Photo, Person {
             msg.sender,
             _account,
             _tokenID,
-            FTMap[_tokenID],
-            block.timestamp
+            FTMap[_tokenID]
         );
     }
 
@@ -391,8 +394,14 @@ contract Copyright is Photo, Person {
 }
 
 contract Community is Copyright {
-    event Follow(address indexed sender, address indexed account);
-    event CancelFollow(address indexed sender, address indexed account);
+    // ? 如果反复横跳关注和取消关注，我该如何查询粉丝和关注者呢呢？
+    // * 分别查询某个账户的这两个数组，然后根据先后顺序进行判断：比如我查询前10个，其中follow的事件那就一定是其粉丝，而其中cancelFollow的则一定不是其粉丝，需要记录。
+    // todo 是不是可以把这两个事件给合到一起，用一个bool变量来标记，这样是不是更好查询？后续写前端的时候再来看看...
+    // 合并了的好处就是可以根据时间（区块号）查询一定范围里面的事件
+
+    // event Follow(address indexed sender, address indexed account);
+    // event CancelFollow(address indexed sender, address indexed account);
+    event AlertFollow(address indexed sender, address indexed account, bool indexed followOrCancel);
 
     function follow(address _account) external onlyRole(USER) {
         require(!isFollowed[msg.sender][_account], "15");
@@ -401,7 +410,7 @@ contract Community is Copyright {
         PER_follow[msg.sender].push(_account);
 
         isFollowed[msg.sender][_account] = true;
-        emit Follow(msg.sender, _account);
+        emit AlertFollow(msg.sender, _account, true);
     }
 
     function cancelFollow(address _account) external onlyRole(USER) {
@@ -411,7 +420,7 @@ contract Community is Copyright {
         ArrayLibAddress.removeByVal(PER_follow[msg.sender], _account);
 
         isFollowed[msg.sender][_account] = false;
-        emit CancelFollow(msg.sender, _account);
+        emit AlertFollow(msg.sender, _account, false);
     }
 }
 
