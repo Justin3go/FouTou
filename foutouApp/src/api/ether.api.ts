@@ -1,29 +1,140 @@
 import axios from "axios";
-import { ethers } from "ethers";
+import { ethers, EventFilter } from "ethers";
 import contractABI from "../../../contracts/artifacts/FouTou.json";
 // import { useEtherStore } from "@/store/etherStore"; 非vue组件不能使用pinia
 
 const CONTRACT_ADDRESS = import.meta.env.VITE_CONTRACT_ADDRESS;
-// debugger
-// const etherStore = useEtherStore();
+
+// 数组代表可选：https://docs.ethers.io/v5/concepts/events/#events--filters
+type TopicAccount = string | null | Array<any>;
+type TopicBool = boolean | null | Array<any>;
 
 function initContract() {
 	const { ethereum } = window;
 	if (ethereum) {
 		const provider = new ethers.providers.Web3Provider(ethereum);
 		const signer = provider.getSigner();
-		const contract = new ethers.Contract(
-			CONTRACT_ADDRESS,
-			contractABI.abi,
-			signer
-		);
+		const contract = new ethers.Contract(CONTRACT_ADDRESS, contractABI.abi, signer);
 		return { provider, signer, contract };
 	} else {
 		throw "Ethereum object doesn't exist!";
 	}
 }
-// todo 合约中新增的get方法加入其中
-export const Auth = {
+
+// * 因为有些api获取的数据还需要前端进行封装处理
+export class BaseAuth {
+	constructor() {
+		const { contract } = initContract(); // todo 这个其实可以移动到全局去
+		this.contract = contract;
+	}
+	contract;
+	// 合约自带方法
+	/** 验证某个账户是否属于某个角色(SUPER_ADMIN, ADMIN, USER)
+	 * @param role bytes32 哈希了的role字符，以下三选一
+	 * SUPER_ADMIN=>0xdf8b4c520ffe197c5343c6f5aec59570151ef9a492f2c624fd45ddde6135ec42
+	 * ADMIN=>0xd980155b32cf66e6af51e0972d64b9d5efe0e6f237dfaa4bdc83f990dd79e9c8
+	 * USER=>0x2db9fd3d099848027c2383d0a083396f6c41510d7acfd92adc99b6cffcf31e96
+	 * @param account address
+	 */
+	verifyRole(role: string, account: string): Promise<boolean> {
+		return this.contract.roles(role, account);
+	}
+	/** 获取预计管理员的数量 */
+	getADMIN_NUM(): Promise<number> {
+		return this.contract.ADMIN_NUM();
+	}
+	getREQUIRED_ADMIN(): Promise<number> {
+		return this.contract.REQUIRED_ADMIN();
+	}
+	getREQUIRED_REPOERTER(): Promise<number> {
+		return this.contract.REQUIRED_REPOERTER();
+	}
+	getREQUIRED_FANS(): Promise<number> {
+		return this.contract.REQUIRED_FANS();
+	}
+	getIS_TEST_VERSION(): Promise<boolean> {
+		return this.contract.IS_TEST_VERSION();
+	}
+	// setConfig(){},
+	// transferSUPER_ADMIN(){},
+	/**
+	 * @param account address
+	 */
+	USER2ADMIN(account: string): Promise<void> {
+		return this.contract.USER2ADMIN(account);
+	}
+	/**
+	 * @param account address
+	 */
+	ADMIN2USER(account: string): Promise<void> {
+		return this.contract.ADMIN2USER(account);
+	}
+	/** 只有管理员有权限的注册函数
+	 * @param account address
+	 */
+	registerByAdmin(account: string): Promise<void> {
+		return this.contract.registerByAdmin(account);
+	}
+	/** 只有正式版本中才能使用的函数
+	 * @param account address
+	 */
+	publicRegister(account: string): Promise<void> {
+		return this.contract.publicRegister(account);
+	}
+	// 事件相关，参数名字虽然与合约事件参数名相同，但这里代表的是该参数的topic集合
+	E_transferAdmin(account: TopicAccount = null, grantOrRevoke: TopicBool = null) {
+		const eventFilter = this.contract.filters.TransferAdmin(account, grantOrRevoke);
+		return this.contract.queryFilter(eventFilter);
+	}
+	E_transferSUPER_ADMIN(oldAccount: TopicAccount = null, newAccount: TopicAccount = null) {
+		const eventFilter = this.contract.filters.TransferSUPER_ADMIN(oldAccount, newAccount);
+		return this.contract.queryFilter(eventFilter);
+	}
+	E_register(admin: TopicAccount = null, account: TopicAccount = null) {
+		const eventFilter = this.contract.filters.Register(admin, account);
+		return this.contract.queryFilter(eventFilter);
+	}
+}
+// TODO 下次从这里开始
+export class BasePhoto {
+	/** 根据tokenID查询FT所有信息
+	 * @param tokenID uint256
+	 * @return json  // todo
+	 */
+	getFTinfo(tokenID: number): Promise<string> {
+		const { contract } = initContract();
+		return contract.FTMap(tokenID);
+	}
+	/** 根据tokenID查询该FT下所有购买者
+	 * @param tokenID uint256
+	 * @return address[]
+	 */
+	getBuyers(tokenID: number): EventFilter {
+		// todo 接下来就是试试这个事件是否能查成功，还有per_owned——FT
+		const { contract } = initContract();
+		return contract.filters.BuyFT(null, null, tokenID);
+	}
+	/** 修改价格
+	 * @param tokenID uint256
+	 * @param newPrice uint256
+	 */
+	alertPrice(tokenID: number, newPrice: number): Promise<void> {
+		const { contract } = initContract();
+		return contract.alertPrice(tokenID, newPrice);
+	}
+	alertDescription(tokenID: number, newDes: string): Promise<void> {
+		const { contract } = initContract();
+		return contract.alertDescription(tokenID, newDes);
+	}
+}
+
+export class BasePerson {}
+
+export class BaseCopyright {}
+
+export class BaseCommunity {}
+
+export const Auth_ = {
 	/**
 	 * 验证某个账户是否属于某个角色(SUPER_ADMIN, ADMIN, USER)
 	 * @param role bytes32 哈希了的role字符，以下三选一
@@ -35,6 +146,11 @@ export const Auth = {
 	verifyRole(role: string, account: string): Promise<boolean> {
 		const { contract } = initContract();
 		return contract.roles(role, account);
+	},
+	getRigister(admin: string) {
+		const { contract } = initContract();
+		let eventFilter = contract.filters.Register(admin);
+		return contract.queryFilter(eventFilter);
 	},
 
 	getADMIN_NUM(): Promise<number> {
@@ -88,7 +204,7 @@ export const Auth = {
 		return contract.publicRegister(account);
 	},
 };
-export const Photo = {
+export const Photo_ = {
 	/**
 	 * 根据tokenID查询FT所有信息
 	 * @param tokenID uint256
@@ -103,9 +219,10 @@ export const Photo = {
 	 * @param tokenID uint256
 	 * @return address[]
 	 */
-	getBuyers(tokenID: number): Promise<Array<string>> {
+	getBuyers(tokenID: number): EventFilter {
+		// todo 接下来就是试试这个事件是否能查成功，还有per_owned——FT
 		const { contract } = initContract();
-		return contract.getBuyers(tokenID);
+		return contract.filters.BuyFT(null, null, tokenID);
 	},
 	/**
 	 * 修改价格
@@ -122,7 +239,7 @@ export const Photo = {
 	},
 };
 
-export const Person = {
+export const Person_ = {
 	/**
 	 * 获取用户信息
 	 * @param account address
@@ -154,9 +271,10 @@ export const Person = {
 	 * @param account address
 	 * @return [tokenID, tokenID, ...]
 	 */
-	getPER_ownedFT(account: string): Promise<Array<number>> {
+	getPER_ownedFT(account: string): EventFilter {
 		const { contract } = initContract();
-		return contract.getPER_ownedFT(account);
+		// return contract.getPER_ownedFT(account);
+		return contract.filters.AddFT(null);
 	},
 	/**
 	 * 获取个人购买的FT
@@ -219,7 +337,7 @@ export const Person = {
 	},
 };
 // todo internal->private
-export const Copyright = {
+export const Copyright_ = {
 	/**
 	 * 获取举报人数达到，举报消息提交的时间
 	 * @param tokenID uint256
@@ -311,18 +429,13 @@ export const Copyright = {
 	 * @param price uint256
 	 * @param description string
 	 */
-	addFT(
-		tokenURI: string,
-		owner: string,
-		price: number,
-		description: string
-	): Promise<void> {
+	addFT(tokenURI: string, owner: string, price: number, description: string): Promise<void> {
 		const { contract } = initContract();
 		return contract.addFT(tokenURI, owner, price, description);
 	},
 };
 
-export const Community = {
+export const Community_ = {
 	/**
 	 * 关注某位博主
 	 * @param account address 博主的地址
@@ -341,7 +454,7 @@ export const Community = {
 	},
 };
 // todo 查出自己关注人的动态，分页展示
-export const Event = {
+export const Event_ = {
 	/**
 	 * 分页查询自己关注的所有博主的动态
 	 * @param account address

@@ -11,10 +11,10 @@ import "./utils/ArrayLibUint.sol";
 // todo 记得加一个提钱的方法
 // * 虽然我可以通过事件查询到是谁创造了FT，但是我们还是应该将其记录在FT结构体的记录中
 contract Auth {
-    // * 查询管理员有哪些就是Grant-Revoke，这里根据社区合约部分，也合并一下... 
+    // * 查询管理员有哪些就是Grant-Revoke，这里根据社区合约部分，也合并一下...
     // event GrantAdmin(address account);
     // event RevokeAdmin(address account);
-    event TransferAdmin(address account, bool indexed GrantOrRevoke);
+    event TransferAdmin(address indexed account, bool indexed grantOrRevoke);
     event TransferSUPER_ADMIN(address oldAccount, address newAccount);
     event Register(address indexed admin, address account);
     // role -> account -> bool : 判断某个账户是否属于该角色
@@ -106,10 +106,7 @@ contract Auth {
 contract Photo {
     event CreateFT(address indexed account, uint256 indexed tokenID, FT ft);
     event AlertPrice(uint256 indexed tokenID, uint256 newPrice);
-    event AlertDescription(
-        uint256 indexed tokenID,
-        string newDes
-    );
+    event AlertDescription(uint256 indexed tokenID, string newDes);
 
     using Counters for Counters.Counter;
     Counters.Counter private _tokenIds;
@@ -135,14 +132,7 @@ contract Photo {
         string calldata _description
     ) internal pure returns (FT memory ft) {
         require(_owner != address(0), "6");
-        ft = FT(
-            _tokenURI,
-            _owner,
-            false,
-            0,
-            _price,
-            _description
-        );
+        ft = FT(_tokenURI, _owner, false, 0, _price, _description);
     }
 
     function _bindTokenID(FT memory ft) internal returns (uint256) {
@@ -183,7 +173,11 @@ contract Person is Auth {
     // 这类事件其实都可以合并一下
     // event ReducePER_credit(address indexed admin, address indexed account);
     // event RevokeReduce(address indexed admin, address indexed account);
-    event AlertCredit(address indexed admin, address indexed account, bool reduceOrRevoke);
+    event AlertCredit(
+        address indexed admin,
+        address indexed account,
+        bool reduceOrRevoke
+    );
     // 用户信息
     mapping(address => string) public PER_items; // string化的json数据，存储个人信息
     mapping(address => string) public PER_ad; // 设置广告等级和广告图片链接，exp:1$http://www.example.com/pic.png
@@ -233,12 +227,13 @@ contract Person is Auth {
 
 contract Copyright is Photo, Person {
     event Submit(uint256 tokenID);
-    event Report(
-        address indexed reporter,
-        uint256 indexed tokenID
-    );
+    event Report(address indexed reporter, uint256 indexed tokenID);
     // action: 1->approve, 2->reject, 3->ignore
-    event ProcessAction(address indexed admin, uint256 indexed tokenID, uint8 approve1reject2ignore3);
+    event ProcessAction(
+        address indexed admin,
+        uint256 indexed tokenID,
+        uint8 approve1reject2ignore3
+    );
     // event Approve(address indexed admin, uint256 indexed tokenID);
     // event Reject(address indexed admin, uint256 indexed tokenID);
     // event Ignore(address indexed admin, uint256 indexed tokenID);
@@ -368,12 +363,7 @@ contract Copyright is Photo, Person {
         // 5.记录在PER_boughtFT中
         PER_boughtFT[_account].push(_tokenID);
 
-        emit BuyFT(
-            msg.sender,
-            _account,
-            _tokenID,
-            FTMap[_tokenID]
-        );
+        emit BuyFT(msg.sender, _account, _tokenID, FTMap[_tokenID]);
     }
 
     function createFT(
@@ -401,7 +391,11 @@ contract Community is Copyright {
 
     // event Follow(address indexed sender, address indexed account);
     // event CancelFollow(address indexed sender, address indexed account);
-    event AlertFollow(address indexed sender, address indexed account, bool indexed followOrCancel);
+    event AlertFollow(
+        address indexed sender,
+        address indexed account,
+        bool indexed followOrCancel
+    );
 
     function follow(address _account) external onlyRole(USER) {
         require(!isFollowed[msg.sender][_account], "15");
