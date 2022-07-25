@@ -17,6 +17,7 @@ contract Auth {
     event TransferAdmin(address indexed account, bool indexed grantOrRevoke);
     event TransferSUPER_ADMIN(address oldAccount, address newAccount);
     event Register(address indexed admin, address account);
+
     // role -> account -> bool : 判断某个账户是否属于该角色
     mapping(bytes32 => mapping(address => bool)) public roles;
 
@@ -26,6 +27,7 @@ contract Auth {
     bytes32 internal constant USER = keccak256(abi.encodePacked("USER"));
 
     // 设置一些定量以后使用
+    address public WITHDRAW_OWNER; // 可以提取合约铸币的账户，默认为部署者
     uint16 public ADMIN_NUM = 30; // 预计管理员数量
     int32 public REQUIRED_ADMIN = 15; // 多少管理员同意才能完成盗版认证
     uint256 public REQUIRED_REPORTER = 100; // 多少用户举报才会提交申请
@@ -49,6 +51,7 @@ contract Auth {
     }
 
     function setConfig(
+        address _WITHDRAW_OWNER,
         uint16 _ADMIN_NUM,
         int32 _REQUIRED_ADMIN,
         uint256 _REQUIRED_REPOERTER,
@@ -57,6 +60,7 @@ contract Auth {
         uint256 _REQUIRED_FANS,
         bool _IS_TEST_VERSION
     ) external onlyRole(SUPER_ADMIN) {
+        WITHDRAW_OWNER = _WITHDRAW_OWNER;
         ADMIN_NUM = _ADMIN_NUM;
         REQUIRED_ADMIN = _REQUIRED_ADMIN;
         REQUIRED_REPORTER = _REQUIRED_REPOERTER;
@@ -107,6 +111,19 @@ contract Auth {
         roles[USER][_account] = true;
         emit Register(address(0), _account);
     }
+
+    function getBalance() external view returns (uint256) {
+        return address(this).balance;
+    }
+
+    function withdraw(uint256 _amount) external {
+        require(msg.sender == WITHDRAW_OWNER, "18");
+        payable(msg.sender).transfer(_amount);
+    }
+
+    fallback() external payable {}
+
+    receive() external payable {}
 }
 
 contract Photo {
@@ -449,10 +466,6 @@ contract Copyright is Photo, Person {
         );
         // bind 里面已经触发了事件了
     }
-
-    fallback() external payable {}
-
-    receive() external payable {}
 }
 
 contract Community is Copyright {
