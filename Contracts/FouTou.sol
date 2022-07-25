@@ -29,8 +29,8 @@ contract Auth {
     uint16 public ADMIN_NUM = 30; // 预计管理员数量
     int32 public REQUIRED_ADMIN = 15; // 多少管理员同意才能完成盗版认证
     uint256 public REQUIRED_REPORTER = 100; // 多少用户举报才会提交申请
-    uint public REPORT_ETHER = 1000000000;  // 举报需要花费的ether
-    uint public REPORT_FEEDBACK = 1000000000;  // 那么举报成功了就应该有嘉奖，这里先退还
+    uint256 public REPORT_ETHER = 1000000000; // 举报需要花费的ether
+    uint256 public REPORT_FEEDBACK = 1000000000; // 那么举报成功了就应该有嘉奖，这里先退还
     uint256 public REQUIRED_FANS = 500; // 多少粉丝数才有被举报的功能
     uint256 internal FEE = 20; // 除以100，代表5%
     bool public IS_TEST_VERSION = true; // 是否公开注册
@@ -52,8 +52,8 @@ contract Auth {
         uint16 _ADMIN_NUM,
         int32 _REQUIRED_ADMIN,
         uint256 _REQUIRED_REPOERTER,
-        uint _REPORT_ETHER,
-        uint _REPORT_FEEDBACK,
+        uint256 _REPORT_ETHER,
+        uint256 _REPORT_FEEDBACK,
         uint256 _REQUIRED_FANS,
         bool _IS_TEST_VERSION
     ) external onlyRole(SUPER_ADMIN) {
@@ -61,7 +61,7 @@ contract Auth {
         REQUIRED_ADMIN = _REQUIRED_ADMIN;
         REQUIRED_REPORTER = _REQUIRED_REPOERTER;
         REPORT_ETHER = _REPORT_ETHER;
-        REPORT_FEEDBACK = _REPORT_FEEDBACK;ƒ
+        REPORT_FEEDBACK = _REPORT_FEEDBACK;
         REQUIRED_FANS = _REQUIRED_FANS;
         IS_TEST_VERSION = _IS_TEST_VERSION;
     }
@@ -295,10 +295,10 @@ contract Copyright is Photo, Person {
     mapping(uint256 => address[]) private MES_reporters; // 举报人集合
     // tokenID -> reporter -> 是否举报过
     mapping(uint256 => mapping(address => bool)) private isReported; // 是否举报过一次
-    uint256[] private reportedTokenID;  // 举报失败呢，没有，所以还要增加举报的难度，举报需要钱（已加）
+    uint256[] private reportedTokenID; // 举报失败呢，没有，所以还要增加举报的难度，举报需要钱（已加）
     // tokenID -> 多少管理员同意了，有可能为负，代表拒绝的多一点
     mapping(uint256 => int32) public approveCount;
-    mapping(uint => bool) private isSubmited;   // 是否已经提交过了，如果是，则不能再举报了
+    mapping(uint256 => bool) private isSubmited; // 是否已经提交过了，如果是，则不能再举报了
     // tokenID -> admin -> bool 管理员是否已经处理过该消息了
     mapping(uint256 => mapping(address => bool)) public isProcessed;
     mapping(address => uint256[]) private processed; // 获取某位管理员处理过的所有消息(tokenID)
@@ -318,6 +318,7 @@ contract Copyright is Photo, Person {
     {
         return MES_reporters[_tokenID];
     }
+
     // 数组的获取不能用public，而要单独写一个函数返回（一般来说，这个数组会很小）
     function getReportedTokenID() external view returns (uint256[] memory) {
         return reportedTokenID;
@@ -339,17 +340,17 @@ contract Copyright is Photo, Person {
 
     function report(uint256 _tokenID)
         external
-        payable 
+        payable
         onlyRole(USER)
         greaterFansNum(_tokenID)
     {
         // greaterFansNum:只能举报超过规定粉丝数的博主
-        require(msg.value >= REPORT_ETHER,  "14");
+        require(msg.value >= REPORT_ETHER, "14");
         require(!isReported[_tokenID][msg.sender], "12");
         require(!isSubmited[_tokenID], "17");
         MES_reporters[_tokenID].push(msg.sender);
         // ==在刚好达到这个数时只执行一次
-        if (MES_reporters[_tokenID].length == REQUIRED_REPOERTER) {
+        if (MES_reporters[_tokenID].length == REQUIRED_REPORTER) {
             _submit(_tokenID);
         }
         isReported[_tokenID][msg.sender] = true;
@@ -376,7 +377,7 @@ contract Copyright is Photo, Person {
             ArrayLibUint.removeByVal(reportedTokenID, _tokenID);
             // 发送铸币给举报者，嘉奖，这里需要钱够
             address[] memory arr = MES_reporters[_tokenID];
-            for(uint i = 0; i < arr.length; i++){
+            for (uint256 i = 0; i < arr.length; i++) {
                 payable(arr[i]).transfer(REPORT_FEEDBACK);
             }
             emit Pirate(_tokenID);
