@@ -8,6 +8,7 @@ const CONTRACT_ADDRESS = import.meta.env.VITE_CONTRACT_ADDRESS;
 // 数组代表可选：https://docs.ethers.io/v5/concepts/events/#events--filters
 type TopicAccount = string | null | Array<any>;
 type TopicBool = boolean | null | Array<any>;
+type TopicInt = number | null | Array<any>;
 
 function initContract() {
 	const { ethereum } = window;
@@ -24,11 +25,11 @@ function initContract() {
 // * 因为有些api获取的数据还需要前端进行封装处理
 export class BaseAuth {
 	constructor() {
-		const { contract } = initContract(); // todo 这个其实可以移动到全局去
+		const { contract } = initContract();
 		this.contract = contract;
 	}
 	contract;
-	// 合约自带方法
+	// 1. var
 	/** 验证某个账户是否属于某个角色(SUPER_ADMIN, ADMIN, USER)
 	 * @param role bytes32 哈希了的role字符，以下三选一
 	 * SUPER_ADMIN=>0xdf8b4c520ffe197c5343c6f5aec59570151ef9a492f2c624fd45ddde6135ec42
@@ -55,6 +56,7 @@ export class BaseAuth {
 	getIS_TEST_VERSION(): Promise<boolean> {
 		return this.contract.IS_TEST_VERSION();
 	}
+	// 2. function
 	// setConfig(){},
 	// transferSUPER_ADMIN(){},
 	/**
@@ -81,7 +83,8 @@ export class BaseAuth {
 	publicRegister(account: string): Promise<void> {
 		return this.contract.publicRegister(account);
 	}
-	// 事件相关，参数名字虽然与合约事件参数名相同，但这里代表的是该参数的topic集合
+	// 3. event
+	// 事件相关，参数名字虽然与合约事件参数名相同，但这里代表的是该参数的topic集合，并且有indexed的这里才有参数
 	E_transferAdmin(account: TopicAccount = null, grantOrRevoke: TopicBool = null) {
 		const eventFilter = this.contract.filters.TransferAdmin(account, grantOrRevoke);
 		return this.contract.queryFilter(eventFilter);
@@ -95,25 +98,29 @@ export class BaseAuth {
 		return this.contract.queryFilter(eventFilter);
 	}
 }
-// TODO 下次从这里开始
+
 export class BasePhoto {
+	constructor(){
+		const { contract } = initContract();
+		this.contract = contract;
+	}
+	contract;
+	// 1. var
 	/** 根据tokenID查询FT所有信息
 	 * @param tokenID uint256
 	 * @return json  // todo
 	 */
 	getFTinfo(tokenID: number): Promise<string> {
-		const { contract } = initContract();
-		return contract.FTMap(tokenID);
+		return this.contract.FTMap(tokenID);
 	}
 	/** 根据tokenID查询该FT下所有购买者
 	 * @param tokenID uint256
 	 * @return address[]
 	 */
-	getBuyers(tokenID: number): EventFilter {
-		// todo 接下来就是试试这个事件是否能查成功，还有per_owned——FT
-		const { contract } = initContract();
-		return contract.filters.BuyFT(null, null, tokenID);
+	getBuyers(tokenID: number): Promise<Array<string>> {
+		return this.contract.buyers(tokenID);
 	}
+	// 2. function
 	/** 修改价格
 	 * @param tokenID uint256
 	 * @param newPrice uint256
@@ -126,13 +133,267 @@ export class BasePhoto {
 		const { contract } = initContract();
 		return contract.alertDescription(tokenID, newDes);
 	}
+	// 3. event
+	E_createFT(account: TopicAccount, tokenID: TopicInt){
+		const eventFilter = this.contract.filters.CreateFT(account, tokenID);
+		return this.contract.queryFilter(eventFilter);
+	}
+	E_alertPrice(tokenID: TopicInt){
+		const eventFilter = this.contract.filters.AlertPrice(tokenID);
+		return this.contract.queryFilter(eventFilter);
+	}
+	E_alertDescription(tokenID: TopicInt){
+		const eventFilter = this.contract.filters.AlertDescription(tokenID);
+		return this.contract.queryFilter(eventFilter);
+	}
 }
 
-export class BasePerson {}
+export class BasePerson {
+	constructor(){
+		const { contract } = initContract();
+		this.contract = contract;
+	}
+	contract;
+	// 1. var
+		/**
+	 * 获取用户信息
+	 * @param account address
+	 * @return string(json)
+	 */
+		 getPER_items(account: string): Promise<string> {
+			return this.contract.PER_items(account);
+		}
+		/**
+		 * 获取广告等级和广告图片链接
+		 * @param account address
+		 * @return 1$https://www.example.com
+		 */
+		getPER_ad(account: string): Promise<string> {
+			return this.contract.PER_ad(account);
+		}
+		/**
+		 * 获取个人信用值
+		 * @param account address
+		 */
+		getPER_credit(account: string): Promise<number> {
+			return this.contract.PER_credit(account);
+		}
+		/**
+		 * 获取个人拥有的FT
+		 * @param account address
+		 * @return [tokenID, tokenID, ...]
+		 */
+		getPER_ownedFT(account: string): Promise<Array<number>> {
+			return this.contract.getPER_ownedFT(account);
+		}
+		/**
+		 * 获取个人购买的FT
+		 * @param account address
+		 * @return [tokenID, tokenID, ...]
+		 */
+		getPER_boughtFT(account: string): Promise<Array<number>> {
+			return this.contract.getPER_boughtFT(account);
+		}
+		/**
+		 * 获取个人拥有的粉丝
+		 * @param account address
+		 * @return [address, address, ...]
+		 */
+		getPER_fans(account: string): Promise<Array<string>> {
+			return this.contract.getPER_fans(account);
+		}
+		/**
+		 * 获取个人拥有的粉丝
+		 * @param account address
+		 * @return [address, address, ...]
+		 */
+		getPER_follow(account: string): Promise<Array<string>> {
+			return this.contract.getPER_follow(account);
+		}
+		// 2. function
+		/**
+		 * 自己修改自己的信息
+		 * @param items string(json)
+		 */
+		alertPER_items(items: string): Promise<void> {
+			return this.contract.alertPER_items(items);
+		}
+		/**
+		 * 修改自己的广告等级和广告图片链接
+		 * @param ad <广告等级>$<广告链接>
+		 */
+		alertPER_ad(ad: string): Promise<void> {
+			return this.contract.alertPER_ad(ad);
+		}
+		/**
+		 * 降低某位用户的信用分，每位管理员对同一位用户只能操作一次
+		 * @param account address
+		 */
+		reducePER_credit(account: string): Promise<void> {
+			return this.contract.reducePER_credit(account);
+		}
+		/**
+		 * 撤销降低，需要之前操作过
+		 * @param account address
+		 */
+		revokeReduce(account: string): Promise<void> {
+			return this.contract.revokeReduce(account);
+		}
+		// 3. event
+		E_alertPER_items(account: TopicAccount){
+			const eventFilter = this.contract.filters.AlertPER_items(account);
+			return this.contract.queryFilter(eventFilter);
+		}
+		E_alertPER_ad(account: TopicAccount){
+			const eventFilter = this.contract.filters.AlertPER_ad(account);
+			return this.contract.queryFilter(eventFilter);
+		}
+		E_alertCredit(admin: TopicAccount, account: TopicAccount){
+			const eventFilter = this.contract.filters.AlertCredit(admin, account);
+			return this.contract.queryFilter(eventFilter);
+		}
+}
 
-export class BaseCopyright {}
+export class BaseCopyright {
+	constructor(){
+		const { contract } = initContract();
+		this.contract = contract;
+	}
+	contract;
+	// 1. var
+		/**
+		 * 获取某消息同意的管理员人数
+		 * @param tokenID uint256
+		 */
+		getApproveCount(tokenID: number): Promise<number> {
+			return this.contract.approveCount(tokenID);
+		}
+		/**
+		 * 获取某管理员处理的所有消息
+		 * @param account address
+		 * @return [tokenID, tokenID, ...]
+		 */
+		getProcessed(account: string): Promise<Array<number>> {
+			return this.contract.getProcessed(account);
+		}
+		/**
+		 * 获取某FT的所有举报人
+		 * @param tokenID uint256
+		 * @return [address, address, ...]
+		 */
+		getMES_reporters(tokenID: number): Promise<Array<string>> {
+			return this.contract.getMES_reporters(tokenID);
+		}
+		/**
+		 * 获取所有已经提交举报的tokenID
+		 * @return [tokenID, tokenID, ...]
+		 */
+		getReportedTokenID(): Promise<Array<number>> {
+			return this.contract.getReportedTokenID();
+		}
+		// 2. function
+		/**
+		 * 举报某件FT
+		 * @param tokenID uint256
+		 */
+		report(tokenID: number): Promise<void> {
+			return this.contract.report(tokenID);
+		}
+		/**
+		 * 管理员同意某举报FT的消息
+		 * @param tokenID uint256
+		 */
+		approve(tokenID: number): Promise<void> {
+			const { contract } = initContract();
+			return this.contract.approve(tokenID);
+		}
+		/**
+		 * 管理员拒绝某举报FT的消息
+		 * @param tokenID uint256
+		 */
+		reject(tokenID: number): Promise<void> {
+			return this.contract.reject(tokenID);
+		}
+		/**
+		 * 管理员忽略某举报FT的消息
+		 * @param tokenID uint256
+		 */
+		ignore(tokenID: number): Promise<void> {
+			return this.contract.ignore(tokenID);
+		}
+		/**
+		 * 购买某件FT，调用时传入其他人地址就是为别人购买，
+		 * @param tokenID uint256
+		 * @param account address
+		 */
+		buyFT(tokenID: number, account: string): Promise<void> {
+			return this.contract.buyFT(tokenID, account);
+		}
+		/**
+		 * 铸造FT
+		 * @param tokenURI 图片链接，需要ipfs
+		 * @param owner address, 可以为自己和他人打造
+		 * @param price uint256
+		 * @param description string
+		 */
+		createFT(tokenURI: string, owner: string, price: number, description: string): Promise<void> {
+			return this.contract.addFT(tokenURI, owner, price, description);
+		}
+		// 3. event
+		E_alertCredit(admin: TopicAccount, account: TopicAccount){
+			const eventFilter = this.contract.filters.AlertCredit(admin, account);
+			return this.contract.queryFilter(eventFilter);
+		}
+		E_submit(){
+			const eventFilter = this.contract.filters.Submit();
+			return this.contract.queryFilter(eventFilter);
+		}
+		E_report(reporter: TopicAccount, tokenID: TopicInt){
+			const eventFilter = this.contract.filters.Report(reporter, tokenID);
+			return this.contract.queryFilter(eventFilter);
+		}
+		E_processAction(admin: TopicAccount, tokenID: TopicInt){
+			const eventFilter = this.contract.filters.ProcessAction(admin, tokenID);
+			return this.contract.queryFilter(eventFilter);
+		}
+		E_pirate(){
+			const eventFilter = this.contract.filters.Pirate();
+			return this.contract.queryFilter(eventFilter);
+		}
+		E_buyFT(sender: TopicAccount, account: TopicAccount, tokenID: TopicInt){
+			const eventFilter = this.contract.filters.BuyFT(sender, account, tokenID);
+			return this.contract.queryFilter(eventFilter);
+		}
+}
 
-export class BaseCommunity {}
+export class BaseCommunity {
+	constructor(){
+		const { contract } = initContract();
+		this.contract = contract;
+	}
+	contract;
+	// 2. function
+	/**
+	 * 关注某位博主
+	 * @param account address 博主的地址
+	 */
+	 follow(account: string): Promise<void> {
+		return this.contract.follow(account);
+	}
+	/**
+	 * 取消关注某位博主，由于要遍历，消耗的gas可能会很多
+	 * @param account address 博主的地址
+	 */
+	cancelFollow(account: string): Promise<void> {
+		return this.contract.cancelFollow(account);
+	}
+	// 3. event
+	E_alertFollow(sender: TopicAccount, account: TopicAccount, followOrCancel: TopicBool){
+		const eventFilter = this.contract.filters.AlertFollow(sender, account, followOrCancel);
+		return this.contract.queryFilter(eventFilter);
+	}
+}
+// todo 后续还要把刚才新增的几个方法加入
 
 export const Auth_ = {
 	/**

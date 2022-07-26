@@ -16,7 +16,7 @@
 	<script setup lang="ts">
 	import { ref } from "vue";
 	import { useEtherStore } from "@/store/etherStore";
-	import { Auth, Photo } from "@/api/etherApi";
+	import { Auth, Photo } from "@/api/ether.api";
 	
 	const etherStore = useEtherStore();
 	let role = ref("");

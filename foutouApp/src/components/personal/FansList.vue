@@ -4,7 +4,7 @@
 </template>
 <script setup lang="ts">
 import { onMounted } from "vue";
-import { Person } from "@/api/etherApi";
+import { Person } from "@/api/ether.api";
 
 const props = defineProps<{ account: string }>();
 const info = reactive({ fans: [] as string[] });

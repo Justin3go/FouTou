@@ -51,7 +51,7 @@
 <script setup lang="ts">
 // todo 以及加了一定的数据，同时PER_ITEMS也有了对应的解析结构，接下来就是需要请求API然后写写界面了
 import { onMounted, ref } from "vue";
-import { Auth, Person } from "@/api/etherApi";
+import { Auth, Person } from "@/api/ether.api";
 import { useEtherStore } from "@/store/etherStore";
 import { parsePER_items } from "@/utils/parser";
 import CreatedList from "@/components/personal/CreatedList.vue";
