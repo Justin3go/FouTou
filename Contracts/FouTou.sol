@@ -367,6 +367,7 @@ contract Copyright is Photo, Person {
         require(msg.value >= REPORT_ETHER, "14");
         require(!isReported[_tokenID][msg.sender], "12");
         require(!isSubmited[_tokenID], "17");
+        FTMap[_tokenID].reportCount++;
         MES_reporters[_tokenID].push(msg.sender);
         // ==在刚好达到这个数时只执行一次
         if (MES_reporters[_tokenID].length == REQUIRED_REPORTER) {
