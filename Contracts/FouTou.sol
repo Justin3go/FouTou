@@ -17,6 +17,7 @@ contract Auth {
     event TransferAdmin(address indexed account, bool indexed grantOrRevoke);
     event TransferSUPER_ADMIN(address oldAccount, address newAccount);
     event Register(address indexed admin, address account);
+    event Withdraw(address account, uint256 amount);
 
     // role -> account -> bool : 判断某个账户是否属于该角色
     mapping(bytes32 => mapping(address => bool)) public roles;
@@ -119,6 +120,7 @@ contract Auth {
     function withdraw(uint256 _amount) external {
         require(msg.sender == WITHDRAW_OWNER, "18");
         payable(msg.sender).transfer(_amount);
+        emit Withdraw(msg.sender, _amount);
     }
 
     fallback() external payable {}
