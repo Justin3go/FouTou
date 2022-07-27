@@ -324,6 +324,7 @@ contract Person is Auth {
     // 不能重复关注和重复取关，这里记录是否关注
     mapping(address => mapping(address => bool)) internal isFollowed;
 
+<<<<<<< HEAD
     function get24PER_ownedFT(address _account, uint256 page)
         external
         view
@@ -356,6 +357,8 @@ contract Person is Auth {
         return ArrayLibAddress.slice24(PER_follow[_account], page);
     }
 
+=======
+>>>>>>> 1042e89 (refactor: 优化合约长度在24KB内)
     // 只能自己修改自己的信息
     function alertPER_items(string calldata _items) external onlyRole(USER) {
         PER_items[msg.sender] = _items;
