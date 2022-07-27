@@ -6,9 +6,6 @@ import "@openzeppelin/contracts/utils/Counters.sol";
 import "./utils/ArrayLibAddress.sol";
 import "./utils/ArrayLibUint.sol";
 
-// todo 需要重构event存储时间，因为有可能事件发生的时间可以直接查询到
-// todo 不知道事件两个参数是不是可以不用加indexed，如果是，则又需要更改
-// todo 记得加一个提钱的方法
 // * 虽然我可以通过事件查询到是谁创造了FT，但是我们还是应该将其记录在FT结构体的记录中
 contract Auth {
     // * 查询管理员有哪些就是Grant-Revoke，这里根据社区合约部分，也合并一下...
@@ -113,10 +110,6 @@ contract Auth {
         emit Register(address(0), _account);
     }
 
-    function getBalance() external view returns (uint256) {
-        return address(this).balance;
-    }
-
     function withdraw(uint256 _amount) external {
         require(msg.sender == WITHDRAW_OWNER, "18");
         payable(msg.sender).transfer(_amount);
@@ -148,14 +141,6 @@ contract Photo {
     mapping(uint256 => FT) public FTMap;
     // tokenID => buyers
     mapping(uint256 => address[]) private buyers;
-
-    function getBuyers(uint256 _tokenID)
-        external
-        view
-        returns (address[] memory)
-    {
-        return buyers[_tokenID];
-    }
 
     // 这里的baseXXX()函数仅仅将数据记录在了图片的相关数据结构中，并没有记录在用户的相关数据结构中
     function _baseMint(
@@ -225,38 +210,6 @@ contract Person is Auth {
     // 不能重复关注和重复取关，这里记录是否关注
     mapping(address => mapping(address => bool)) internal isFollowed;
 
-    function getPER_ownedFT(address _account)
-        external
-        view
-        returns (uint256[] memory)
-    {
-        return PER_ownedFT[_account];
-    }
-
-    function getPER_boughtFT(address _account)
-        external
-        view
-        returns (uint256[] memory)
-    {
-        return PER_boughtFT[_account];
-    }
-
-    function getPER_fans(address _account)
-        external
-        view
-        returns (address[] memory)
-    {
-        return PER_fans[_account];
-    }
-
-    function getPER_follow(address _account)
-        external
-        view
-        returns (address[] memory)
-    {
-        return PER_follow[_account];
-    }
-
     // 只能自己修改自己的信息
     function alertPER_items(string calldata _items) external onlyRole(USER) {
         PER_items[msg.sender] = _items;
@@ -314,37 +267,13 @@ contract Copyright is Photo, Person {
     mapping(uint256 => address[]) private MES_reporters; // 举报人集合
     // tokenID -> reporter -> 是否举报过
     mapping(uint256 => mapping(address => bool)) private isReported; // 是否举报过一次
-    uint256[] private reportedTokenID; // 举报失败呢，没有，所以还要增加举报的难度，举报需要钱（已加）
     // tokenID -> 多少管理员同意了，有可能为负，代表拒绝的多一点
     mapping(uint256 => int32) public approveCount;
     mapping(uint256 => bool) private isSubmited; // 是否已经提交过了，如果是，则不能再举报了
     // tokenID -> admin -> bool 管理员是否已经处理过该消息了
     mapping(uint256 => mapping(address => bool)) public isProcessed;
-    mapping(address => uint256[]) private processed; // 获取某位管理员处理过的所有消息(tokenID)
-
-    function getProcessed(address _admin)
-        external
-        view
-        returns (uint256[] memory)
-    {
-        return processed[_admin];
-    }
-
-    function getMES_reporters(uint256 _tokenID)
-        external
-        view
-        returns (address[] memory)
-    {
-        return MES_reporters[_tokenID];
-    }
-
-    // 数组的获取不能用public，而要单独写一个函数返回（一般来说，这个数组会很小）
-    function getReportedTokenID() external view returns (uint256[] memory) {
-        return reportedTokenID;
-    }
 
     function _submit(uint256 _tokenID) private {
-        reportedTokenID.push(_tokenID);
         // 提交后不可再举报
         isSubmited[_tokenID] = true;
         emit Submit(_tokenID);
@@ -393,8 +322,6 @@ contract Copyright is Photo, Person {
         ) {
             // 盗版认证成功
             FTMap[_tokenID].status = true;
-            // 从消息中删除
-            ArrayLibUint.removeByVal(reportedTokenID, _tokenID);
             // 发送铸币给举报者，嘉奖，这里需要钱够
             address[] memory arr = MES_reporters[_tokenID];
             for (uint256 i = 0; i < arr.length; i++) {
@@ -403,7 +330,6 @@ contract Copyright is Photo, Person {
             emit Pirate(_tokenID);
         }
         isProcessed[_tokenID][msg.sender] = true;
-        processed[msg.sender].push(_tokenID);
 
         emit ProcessAction(msg.sender, _tokenID, 1);
     }
@@ -415,7 +341,6 @@ contract Copyright is Photo, Person {
     {
         approveCount[_tokenID]--;
         isProcessed[_tokenID][msg.sender] = true;
-        processed[msg.sender].push(_tokenID);
 
         emit ProcessAction(msg.sender, _tokenID, 2);
     }
@@ -426,7 +351,6 @@ contract Copyright is Photo, Person {
         notProcessed(_tokenID, msg.sender)
     {
         isProcessed[_tokenID][msg.sender] = true;
-        processed[msg.sender].push(_tokenID);
 
         emit ProcessAction(msg.sender, _tokenID, 3);
     }
