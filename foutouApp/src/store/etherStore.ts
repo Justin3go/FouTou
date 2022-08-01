@@ -1,12 +1,11 @@
-import { ethers } from "ethers";
 import { acceptHMRUpdate, defineStore } from "pinia";
-import contractABI from "../../../contracts/artifacts/FouTou.json";
-const contractAddress = "0x13965A9843393d7a4bb2a4b28a83271e6f97BF99";
+import { Auth, Person } from "@/api/ether.api";
 
 export const useEtherStore = defineStore("ether", {
 	state: () => {
 		return {
 			account: '',
+			isAdmin: false,
 		};
 	},
 	actions: {
@@ -23,10 +22,17 @@ export const useEtherStore = defineStore("ether", {
 
         console.log("connected: ", myAccounts[0]);
         this.account= myAccounts[0];
-        
+        this.verifyRole();  // * 连接钱包后就立即验证权限
 			} catch (error) {
         console.log(error);
       }
 		},
+		async verifyRole(){
+			const auth = new Auth();
+			this.isAdmin = await auth.verifyRole(
+				"0xd980155b32cf66e6af51e0972d64b9d5efe0e6f237dfaa4bdc83f990dd79e9c8",
+				this.account
+			);
+		}
 	},
 });

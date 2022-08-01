@@ -122,7 +122,7 @@ contract Auth {
 }
 
 contract Photo {
-    event CreateFT(address indexed account, uint256 indexed tokenID, FT ft);
+    event CreateFT(address indexed account, uint256 tokenID, FT ft);
     event AlertPrice(uint256 indexed tokenID, uint256 newPrice);
     event AlertDescription(uint256 indexed tokenID, string newDes);
 

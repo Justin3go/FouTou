@@ -148,8 +148,8 @@ export class BasePhoto {
 		return contract.alertDescription(tokenID, newDes);
 	}
 	// 3. event
-	E_createFT(account: TopicAccount, tokenID: TopicInt){
-		const eventFilter = this.contract.filters.CreateFT(account, tokenID);
+	E_createFT(account: TopicAccount){
+		const eventFilter = this.contract.filters.CreateFT(account);
 		return this.contract.queryFilter(eventFilter);
 	}
 	E_alertPrice(tokenID: TopicInt){

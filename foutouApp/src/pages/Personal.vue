@@ -1,6 +1,6 @@
 <template>
 	<div class="custom-bg">
-		<div class="avator">
+		<div class="avatar">
 			<el-skeleton
 				style="--el-skeleton-circle-size: 10vw"
 				animated
@@ -20,7 +20,7 @@
 					<div class="name">
 						{{ info.items.name }}
 					</div>
-					<div class="discription">
+					<div class="description">
 						{{ info.items.description }}
 					</div>
 				</div>
@@ -51,7 +51,7 @@
 <script setup lang="ts">
 // todo 以及加了一定的数据，同时PER_ITEMS也有了对应的解析结构，接下来就是需要请求API然后写写界面了
 import { onMounted, ref } from "vue";
-import { Auth, Person } from "@/api/ether.api";
+import { Person } from "@/api/ether.api";
 import { useEtherStore } from "@/store/etherStore";
 import { parsePER_items } from "@/utils/parser";
 import CreatedList from "@/components/personal/CreatedList.vue";
@@ -59,14 +59,13 @@ import BoughtList from "@/components/personal/BoughtList.vue";
 import FansList from "@/components/personal/FansList.vue";
 import FollowList from "@/components/personal/FollowList.vue";
 
-// todo 至于后续他人浏览自己的页面就是borwse/address，所以在当前路由下肯定是自己浏览iji
+// todo 至于后续他人浏览自己的页面就是browse/address，所以在当前路由下肯定是自己浏览自己
 const etherStore = useEtherStore();
 
 let loading = ref(true);
 let credit = ref(0);
-const isAdmin = ref(false);
 const info = reactive({
-	items: { name: "", description: "", avator: "", twitter: "" },
+	items: { name: "", description: "", avatar: "", twitter: "" },
 	ad: {},
 	credit: {},
 });
@@ -79,15 +78,13 @@ const handleSelect = (key: string, keyPath: string[]) => {
 
 onMounted(async () => {
 	const account = etherStore.account;
-	isAdmin.value = await Auth.verifyRole(
-		"0xd980155b32cf66e6af51e0972d64b9d5efe0e6f237dfaa4bdc83f990dd79e9c8",
-		account
-	);
-	const srcItems = await Person.getPER_items(account);
+	const person = new Person();
+
+	const srcItems = await person.getPER_items(account);
 	info.items = parsePER_items(srcItems);
 
-	info.ad = await Person.getPER_ad(account);
-	credit.value = await Person.getPER_credit(account);
+	info.ad = await person.getPER_ad(account);  // todo 后续还要修改背景图皮的样式
+	credit.value = await person.getPER_credit(account);
 	loading.value = false;
 });
 </script>
@@ -97,7 +94,7 @@ onMounted(async () => {
 	width: 100%;
 	background-color: $color-primary;
 	position: relative;
-	.avator {
+	.avatar {
 		height: 10vw;
 		border-radius: 5vw;
 		position: absolute;
@@ -112,7 +109,7 @@ onMounted(async () => {
 		font-size: 1.5vw;
 		font-weight: 900;
 	}
-	.discription {
+	.description {
 		margin-top: 1vw;
 	}
 }

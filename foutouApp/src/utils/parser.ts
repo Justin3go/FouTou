@@ -1,9 +1,7 @@
 /* PER_items
-name:justin3go,
-description:i am good,
-avator:https://ipfs.io/ipfs/QmWx2XXpJpWKaxSDM1aptTLvXjAzQ82afvoUFT4LWB2cCv?filename=ava.jpg,
+name:justin3go,description:i am good,avatar:https://ipfs.io/ipfs/QmWx2XXpJpWKaxSDM1aptTLvXjAzQ82afvoUFT4LWB2cCv?filename=ava.jpg,twitter:test123,
 可选：
-twitter:test123,
+
 facebook:test234,
 wechat:test345,
 weibo:test456,
@@ -15,7 +13,7 @@ bilibili:...
 interface PER_ITEMS {
 	name: string;
 	description: string;
-	avator: string;
+	avatar: string;
 	twitter: string;
 	[propName: string]: any;
 }
@@ -27,7 +25,7 @@ export function parsePER_items(items: string): PER_ITEMS {
 	const item = items.split(",");
 	console.log(item);
 
-	const res: PER_ITEMS = { name: "", description: "", avator: "", twitter: "" };
+	const res: PER_ITEMS = { name: "", description: "", avatar: "", twitter: "" };
 	item.forEach((v) => {
 		let i = v.indexOf(":");
 		let resKey = v.slice(0, i);
