@@ -1,4 +1,4 @@
-import axios from "axios";
+// todo 后续再做分页查询优化，现在就以查询事件就行了
 import { ethers, EventFilter } from "ethers";
 import contractABI from "../../../contracts/artifacts/FouTou.json";
 // import { useEtherStore } from "@/store/etherStore"; 非vue组件不能使用pinia
@@ -413,5 +413,9 @@ export class Auth extends BaseAuth {
 }
 export class Photo extends BasePhoto{}
 export class Person extends BasePerson{}
-export class Copyright extends BaseCopyright{}
-export class Community extends BaseCommunity{}
+export class Copyright extends BaseCopyright{
+
+}
+export class Community extends BaseCommunity{
+	
+}

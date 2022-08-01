@@ -14,7 +14,8 @@ onMounted(async () => {
   // 获取该用户创建的FT
   const photo = new Photo();
   const auth = new Auth();
-  
+  // todo 如何分页查询事件...
+
 
 
   // 1.根据账户获取所创建FT的所有id
