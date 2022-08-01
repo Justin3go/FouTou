@@ -50,8 +50,8 @@ export class BaseAuth {
 	getREQUIRED_ADMIN(): Promise<number> {
 		return this.contract.REQUIRED_ADMIN();
 	}
-	getREQUIRED_REPOERTER(): Promise<number> {
-		return this.contract.REQUIRED_REPOERTER();
+	getREQUIRED_REPORTER(): Promise<number> {
+		return this.contract.REQUIRED_REPORTER();
 	}
 	getREPORT_ETHER():Promise<number>{
 		return this.contract.REPORT_ETHER();
