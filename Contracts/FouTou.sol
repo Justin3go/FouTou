@@ -148,8 +148,9 @@ contract Auth {
     uint256 internal FEE = 20; // 除以100，代表5%
     bool public IS_TEST_VERSION = true; // 是否公开注册
 
+    // 不要报错信息，之后在前端规定一下就可以了
     modifier onlyRole(bytes32 _role) {
-        require(roles[_role][msg.sender], "1");
+        require(roles[_role][msg.sender]);  // ! 该角色没有相应权限
         _;
     }
 
@@ -191,7 +192,7 @@ contract Auth {
     }
 
     function _USER2ADMIN(address _account) private {
-        require(!roles[ADMIN][_account], "2");
+        require(!roles[ADMIN][_account]);  // ! 目标用户已经属于管理员了
         roles[ADMIN][_account] = true;
         emit TransferAdmin(_account, true);
     }
@@ -201,7 +202,7 @@ contract Auth {
     }
 
     function _ADMIN2USER(address _account) private {
-        require(roles[ADMIN][_account], "3");
+        require(roles[ADMIN][_account]);  // ! 目标降权用户本来就不是管理员
         roles[ADMIN][_account] = false;
         emit TransferAdmin(_account, false);
     }
@@ -211,20 +212,20 @@ contract Auth {
     }
 
     function registerByAdmin(address _account) external onlyRole(ADMIN) {
-        require(!roles[USER][_account], "4");
+        require(!roles[USER][_account]);  // ! 该用户已经注册
         roles[USER][_account] = true;
         emit Register(msg.sender, _account);
     }
 
     function publicRegister(address _account) external {
-        require(!IS_TEST_VERSION, "5");
-        require(!roles[USER][_account], "4");
+        require(!IS_TEST_VERSION);  // ! 当前版本未公开，请联系管理员进行注册
+        require(!roles[USER][_account]);  // ! 该用户已经注册
         roles[USER][_account] = true;
         emit Register(address(0), _account);
     }
 
     function withdraw(uint256 _amount) external {
-        require(msg.sender == WITHDRAW_OWNER, "18");
+        require(msg.sender == WITHDRAW_OWNER);  // ! 你没有权限从该合约中提取铸币
         payable(msg.sender).transfer(_amount);
         emit Withdraw(msg.sender, _amount);
     }
@@ -262,7 +263,7 @@ contract Photo {
         uint256 _price,
         string calldata _description
     ) internal pure returns (FT memory ft) {
-        require(_owner != address(0), "6");
+        require(_owner != address(0));  // ! 不能为零地址打造FT
         ft = FT(_tokenURI, _owner, false, 0, _price, _description);
     }
 
@@ -281,7 +282,7 @@ contract Photo {
 
     function alertPrice(uint256 _tokenID, uint256 _newPrice) external {
         FT storage ft = FTMap[_tokenID];
-        require(ft.owner == msg.sender, "7");
+        require(ft.owner == msg.sender);  // ! 你不是该FT的拥有者，无法修改其信息
         ft.price = _newPrice;
 
         emit AlertPrice(_tokenID, _newPrice);
@@ -291,7 +292,7 @@ contract Photo {
         external
     {
         FT storage ft = FTMap[_tokenID];
-        require(ft.owner == msg.sender, "7");
+        require(ft.owner == msg.sender);  // ! 你不是该FT的拥有者，无法修改其信息
         ft.description = _newDes;
 
         emit AlertDescription(_tokenID, _newDes);
@@ -368,10 +369,9 @@ contract Person is Auth {
 
     function reducePER_credit(address _account) external onlyRole(ADMIN) {
         require(
-            !AlertedCreditLog[msg.sender][_account], // 需要未操作过
-            "8"
+            !AlertedCreditLog[msg.sender][_account] // 需要未操作过  // ! 不能对同一个用户重复操作
         );
-        require(PER_credit[_account] >= -100, "9");
+        require(PER_credit[_account] >= -100);  // ! 已经是最小值了
         PER_credit[_account]--; // 每次只能减一分
         AlertedCreditLog[msg.sender][_account] = true; // 表示已经修改过了
         emit AlertCredit(msg.sender, _account, true);
@@ -379,8 +379,7 @@ contract Person is Auth {
 
     function revokeReduce(address _account) external onlyRole(ADMIN) {
         require(
-            AlertedCreditLog[msg.sender][_account], // 需要操作过
-            "10"
+            AlertedCreditLog[msg.sender][_account] // 需要操作过  // ! 之前未对该用户进行操作，无法撤销
         );
         PER_credit[_account]++;
         AlertedCreditLog[msg.sender][_account] = false;
@@ -427,7 +426,7 @@ contract Copyright is Photo, Person {
     modifier greaterFansNum(uint256 _tokenID) {
         address owner = FTMap[_tokenID].owner;
         uint256 fans = PER_fans[owner].length;
-        require(fans >= REQUIRED_FANS, "11");
+        require(fans >= REQUIRED_FANS);  // ! 目标举报用户粉丝数过少，不构成可举报的条件
         _;
     }
 
@@ -438,9 +437,9 @@ contract Copyright is Photo, Person {
         greaterFansNum(_tokenID)
     {
         // greaterFansNum:只能举报超过规定粉丝数的博主
-        require(msg.value >= REPORT_ETHER, "14");
-        require(!isReported[_tokenID][msg.sender], "12");
-        require(!isSubmited[_tokenID], "17");
+        require(msg.value >= REPORT_ETHER);  // ! 需要支付一定的铸币，但该次交易的铸币不够
+        require(!isReported[_tokenID][msg.sender]);  // ! 已经举报过了，不可重复举报
+        require(!isSubmited[_tokenID]);  // ! 举报数达到阈值，已经提交盗版认证，不可再举报
         FTMap[_tokenID].reportCount++;
         MES_reporters[_tokenID].push(msg.sender);
         // ==在刚好达到这个数时只执行一次
@@ -452,7 +451,7 @@ contract Copyright is Photo, Person {
     }
 
     modifier notProcessed(uint256 _tokenID, address _admin) {
-        require(!isProcessed[_tokenID][_admin], "13");
+        require(!isProcessed[_tokenID][_admin]);  // ! 已经处理过了，不可重复操作
         _;
     }
 
@@ -511,7 +510,7 @@ contract Copyright is Photo, Person {
         uint256 fee = price / FEE;
         uint256 totalPrice = price + fee;
         // 2.比较用户支付金额与totalPrice，多退少弃
-        require(msg.value >= totalPrice, "14");
+        require(msg.value >= totalPrice);  // ! 需要支付一定的铸币，但该次交易的铸币不够
         uint256 refund = msg.value - totalPrice;
         if (refund > 0) {
             payable(msg.sender).transfer(refund);
@@ -555,7 +554,7 @@ contract Community is Copyright {
     );
 
     function follow(address _account) external onlyRole(USER) {
-        require(!isFollowed[msg.sender][_account], "15");
+        require(!isFollowed[msg.sender][_account]);  // ! 你已经关注过他了，不能重复操作
         // 双方数组互相添加
         PER_fans[_account].push(msg.sender);
         PER_follow[msg.sender].push(_account);
@@ -565,7 +564,7 @@ contract Community is Copyright {
     }
 
     function cancelFollow(address _account) external onlyRole(USER) {
-        require(isFollowed[msg.sender][_account], "16");
+        require(isFollowed[msg.sender][_account]);  // ! 你并不是他的粉丝，不需要取消关注
         // 双方数组互相删除
         ArrayLibAddress.removeByVal(PER_fans[_account], msg.sender);
         ArrayLibAddress.removeByVal(PER_follow[msg.sender], _account);
