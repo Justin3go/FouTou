@@ -3,8 +3,121 @@
 pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/utils/Counters.sol";
-import "./utils/ArrayLibAddress.sol";
-import "./utils/ArrayLibUint.sol";
+// import "./utils/ArrayLibAddress.sol";
+// import "./utils/ArrayLibUint.sol";
+
+// 对uint数组进行操作
+library ArrayLibUint {
+    // 在给定数组中找到对应元素的索引
+    function find(uint256[] storage arr, uint256 v)
+        internal
+        view
+        returns (uint256)
+    {
+        for (uint256 i = 0; i < arr.length; i++) {
+            if (arr[i] == v) {
+                return i;
+            }
+        }
+        revert("not found");
+    }
+
+    // 根据索引删除元素（不保证顺序）
+    function removeByIndex(uint256[] storage arr, uint256 _index) internal {
+        require(_index < arr.length, "index out of bound");
+        arr[_index] = arr[arr.length - 1];
+        arr.pop();
+    }
+
+    // 根据uint值是否相等删除第一个相等的元素（不保证顺序）
+    function removeByVal(uint256[] storage arr, uint256 val) internal {
+        uint256 _index = find(arr, val);
+        removeByIndex(arr, _index);
+    }
+
+    // 固定切24个，第一位返回数组长度
+    function slice24(uint256[] memory arr, uint256 page)
+        internal
+        pure
+        returns (uint256[24] memory)
+    {
+        uint256 start = page * 24;
+        uint256 end = start + 24;
+        if (end >= arr.length) {
+            end = arr.length;
+        }
+        uint256[24] memory res;
+        if (page == 0) {
+            // 就把第一位赋值为数组长度
+            res[0] = arr.length;
+            for (uint256 i = 1; i < end; i++) {
+                res[i] = arr[i - 1];
+            }
+        } else {
+            for (uint256 i = start; i < end; i++) {
+                res[i] = arr[i - 1];
+            }
+        }
+        return res;
+    }
+}
+
+// 对address数组进行操作
+library ArrayLibAddress {
+    // 在给定数组中找到对应元素的索引
+    function find(address[] storage arr, address v)
+        internal
+        view
+        returns (uint256)
+    {
+        for (uint256 i = 0; i < arr.length; i++) {
+            if (arr[i] == v) {
+                return i;
+            }
+        }
+        revert("not found");
+    }
+
+    // 根据索引删除元素（不保证顺序）
+    function removeByIndex(address[] storage arr, uint256 _index) internal {
+        require(_index < arr.length, "index out of bound");
+        arr[_index] = arr[arr.length - 1];
+        arr.pop();
+    }
+
+    // 根据值是否相等删除第一个相等的元素（不保证顺序）
+    function removeByVal(address[] storage arr, address val) internal {
+        uint256 _index = find(arr, val);
+        removeByIndex(arr, _index);
+    }
+
+    // 固定切24个，第一位返回数组长度
+    function slice24(address[] memory arr, uint256 page)
+        internal
+        pure
+        returns (address[24] memory)
+    {
+        uint start = page*24;
+        uint256 end = start + 24;
+        if (end >= arr.length) {
+            end = arr.length;
+        }
+        address[24] memory res;
+        if (page == 0) {
+            // 就把第一位赋值为数组长度
+            res[0] = address(uint160(arr.length));
+            for (uint256 i = 1; i < end; i++) {
+                res[i] = arr[i - 1];
+            }
+        } else {
+            for (uint256 i = start; i < end; i++) {
+                res[i] = arr[i - 1];
+            }
+        }
+        return res;
+    }
+}
+
 
 // * 虽然我可以通过事件查询到是谁创造了FT，但是我们还是应该将其记录在FT结构体的记录中
 contract Auth {
@@ -209,6 +322,38 @@ contract Person is Auth {
     mapping(address => mapping(address => bool)) private AlertedCreditLog;
     // 不能重复关注和重复取关，这里记录是否关注
     mapping(address => mapping(address => bool)) internal isFollowed;
+
+    function get24PER_ownedFT(address _account, uint256 page)
+        external
+        view
+        returns (uint256[24] memory)
+    {
+        return ArrayLibUint.slice24(PER_ownedFT[_account], page);
+    }
+
+    function get24PER_boughtFT(address _account, uint256 page)
+        external
+        view
+        returns (uint256[24] memory)
+    {
+        return ArrayLibUint.slice24(PER_boughtFT[_account], page);
+    }
+
+    function get24PER_fans(address _account, uint256 page)
+        external
+        view
+        returns (address[24] memory)
+    {
+        return ArrayLibAddress.slice24(PER_fans[_account], page);
+    }
+
+    function get24PER_follow(address _account, uint256 page)
+        external
+        view
+        returns (address[24] memory)
+    {
+        return ArrayLibAddress.slice24(PER_follow[_account], page);
+    }
 
     // 只能自己修改自己的信息
     function alertPER_items(string calldata _items) external onlyRole(USER) {

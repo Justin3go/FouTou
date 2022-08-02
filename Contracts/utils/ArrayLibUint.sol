@@ -31,19 +31,28 @@ library ArrayLibUint {
         removeByIndex(arr, _index);
     }
 
-    // 固定切12个
-    function slice12(uint256[] memory arr, uint256 page)
+    // 固定切24个，第一位返回数组长度
+    function slice24(uint256[] memory arr, uint256 page)
         internal
         pure
-        returns (uint256[12] memory)
+        returns (uint256[24] memory)
     {
-        uint256 end = page + 12;
+        uint256 start = page * 24;
+        uint256 end = start + 24;
         if (end >= arr.length) {
             end = arr.length;
         }
-        uint256[12] memory res;
-        for (uint256 i = page; i < end; i++) {
-            res[i] = arr[i];
+        uint256[24] memory res;
+        if (page == 0) {
+            // 就把第一位赋值为数组长度
+            res[0] = arr.length;
+            for (uint256 i = 1; i < end; i++) {
+                res[i] = arr[i - 1];
+            }
+        } else {
+            for (uint256 i = start; i < end; i++) {
+                res[i] = arr[i - 1];
+            }
         }
         return res;
     }
