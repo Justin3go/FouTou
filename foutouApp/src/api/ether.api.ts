@@ -40,7 +40,7 @@ export class BaseAuth {
 	verifyRole(role: string, account: string): Promise<boolean> {
 		return this.contract.roles(role, account);
 	}
-	getWITHDRAW_OWNER(): Promise<string>{
+	getWITHDRAW_OWNER(): Promise<string> {
 		return this.contract.WITHDRAW_OWNER();
 	}
 	/** 获取预计管理员的数量 */
@@ -53,10 +53,10 @@ export class BaseAuth {
 	getREQUIRED_REPORTER(): Promise<number> {
 		return this.contract.REQUIRED_REPORTER();
 	}
-	getREPORT_ETHER():Promise<number>{
+	getREPORT_ETHER(): Promise<number> {
 		return this.contract.REPORT_ETHER();
 	}
-	getREPORT_FEEDBACK():Promise<number>{
+	getREPORT_FEEDBACK(): Promise<number> {
 		return this.contract.REPORT_FEEDBACK();
 	}
 	getREQUIRED_FANS(): Promise<number> {
@@ -92,9 +92,6 @@ export class BaseAuth {
 	publicRegister(account: string): Promise<void> {
 		return this.contract.publicRegister(account);
 	}
-	getBalance():Promise<number>{
-		return this.contract.getBalance();
-	}
 	// withdraw(){}
 	// 3. event
 	// 事件相关，参数名字虽然与合约事件参数名相同，但这里代表的是该参数的topic集合，并且有indexed的这里才有参数
@@ -114,7 +111,7 @@ export class BaseAuth {
 }
 
 export class BasePhoto {
-	constructor(){
+	constructor() {
 		const { contract } = initContract();
 		this.contract = contract;
 	}
@@ -131,8 +128,8 @@ export class BasePhoto {
 	 * @param tokenID uint256
 	 * @return address[]
 	 */
-	getBuyers(tokenID: number): Promise<Array<string>> {
-		return this.contract.buyers(tokenID);
+	get24buyers(tokenID: number, page: number): Promise<Array<string>> {
+		return this.contract.get24buyers(tokenID, page);
 	}
 	// 2. function
 	/** 修改价格
@@ -148,240 +145,225 @@ export class BasePhoto {
 		return contract.alertDescription(tokenID, newDes);
 	}
 	// 3. event
-	E_createFT(account: TopicAccount){
+	E_createFT(account: TopicAccount) {
 		const eventFilter = this.contract.filters.CreateFT(account);
 		return this.contract.queryFilter(eventFilter);
 	}
-	E_alertPrice(tokenID: TopicInt){
+	E_alertPrice(tokenID: TopicInt) {
 		const eventFilter = this.contract.filters.AlertPrice(tokenID);
 		return this.contract.queryFilter(eventFilter);
 	}
-	E_alertDescription(tokenID: TopicInt){
+	E_alertDescription(tokenID: TopicInt) {
 		const eventFilter = this.contract.filters.AlertDescription(tokenID);
 		return this.contract.queryFilter(eventFilter);
 	}
 }
 
 export class BasePerson {
-	constructor(){
+	constructor() {
 		const { contract } = initContract();
 		this.contract = contract;
 	}
 	contract;
 	// 1. var
-		/**
+	/**
 	 * 获取用户信息
 	 * @param account address
 	 * @return string(json)
 	 */
-		 getPER_items(account: string): Promise<string> {
-			return this.contract.PER_items(account);
-		}
-		/**
-		 * 获取广告等级和广告图片链接
-		 * @param account address
-		 * @return 1$https://www.example.com
-		 */
-		getPER_ad(account: string): Promise<string> {
-			return this.contract.PER_ad(account);
-		}
-		/**
-		 * 获取个人信用值
-		 * @param account address
-		 */
-		getPER_credit(account: string): Promise<number> {
-			return this.contract.PER_credit(account);
-		}
-		/**
-		 * 获取个人拥有的FT
-		 * @param account address
-		 * @return [tokenID, tokenID, ...]
-		 */
-		getPER_ownedFT(account: string): Promise<Array<number>> {
-			return this.contract.getPER_ownedFT(account);
-		}
-		/**
-		 * 获取个人购买的FT
-		 * @param account address
-		 * @return [tokenID, tokenID, ...]
-		 */
-		getPER_boughtFT(account: string): Promise<Array<number>> {
-			return this.contract.getPER_boughtFT(account);
-		}
-		/**
-		 * 获取个人拥有的粉丝
-		 * @param account address
-		 * @return [address, address, ...]
-		 */
-		getPER_fans(account: string): Promise<Array<string>> {
-			return this.contract.getPER_fans(account);
-		}
-		/**
-		 * 获取个人拥有的粉丝
-		 * @param account address
-		 * @return [address, address, ...]
-		 */
-		getPER_follow(account: string): Promise<Array<string>> {
-			return this.contract.getPER_follow(account);
-		}
-		// 2. function
-		/**
-		 * 自己修改自己的信息
-		 * @param items string(json)
-		 */
-		alertPER_items(items: string): Promise<void> {
-			return this.contract.alertPER_items(items);
-		}
-		/**
-		 * 修改自己的广告等级和广告图片链接
-		 * @param ad <广告等级>$<广告链接>
-		 */
-		alertPER_ad(ad: string): Promise<void> {
-			return this.contract.alertPER_ad(ad);
-		}
-		/**
-		 * 降低某位用户的信用分，每位管理员对同一位用户只能操作一次
-		 * @param account address
-		 */
-		reducePER_credit(account: string): Promise<void> {
-			return this.contract.reducePER_credit(account);
-		}
-		/**
-		 * 撤销降低，需要之前操作过
-		 * @param account address
-		 */
-		revokeReduce(account: string): Promise<void> {
-			return this.contract.revokeReduce(account);
-		}
-		// 3. event
-		E_alertPER_items(account: TopicAccount){
-			const eventFilter = this.contract.filters.AlertPER_items(account);
-			return this.contract.queryFilter(eventFilter);
-		}
-		E_alertPER_ad(account: TopicAccount){
-			const eventFilter = this.contract.filters.AlertPER_ad(account);
-			return this.contract.queryFilter(eventFilter);
-		}
-		E_alertCredit(admin: TopicAccount, account: TopicAccount){
-			const eventFilter = this.contract.filters.AlertCredit(admin, account);
-			return this.contract.queryFilter(eventFilter);
-		}
+	getPER_items(account: string): Promise<string> {
+		return this.contract.PER_items(account);
+	}
+	/**
+	 * 获取广告等级和广告图片链接
+	 * @param account address
+	 * @return 1$https://www.example.com
+	 */
+	getPER_ad(account: string): Promise<string> {
+		return this.contract.PER_ad(account);
+	}
+	/**
+	 * 获取个人信用值
+	 * @param account address
+	 */
+	getPER_credit(account: string): Promise<number> {
+		return this.contract.PER_credit(account);
+	}
+	/**
+	 * 获取个人拥有的FT
+	 * @param account address
+	 * @return [tokenID, tokenID, ...]
+	 */
+	// 2. function
+	// * 含24的函数如果page=0，则返回的数组第一位是整个数据长度
+	get24PER_ownedFT(account: string, page: number): Promise<Array<number>> {
+		return this.contract.get24PER_ownedFT(account, page);
+	}
+	/**
+	 * 获取个人购买的FT
+	 * @param account address
+	 * @return [tokenID, tokenID, ...]
+	 */
+	get24PER_boughtFT(account: string, page: number): Promise<Array<number>> {
+		return this.contract.get24PER_boughtFT(account, page);
+	}
+	/**
+	 * 获取个人拥有的粉丝
+	 * @param account address
+	 * @return [address, address, ...]
+	 */
+	get24PER_fans(account: string, page: number): Promise<Array<string>> {
+		return this.contract.get24PER_fans(account, page);
+	}
+	/**
+	 * 获取个人拥有的粉丝
+	 * @param account address
+	 * @return [address, address, ...]
+	 */
+	get24PER_follow(account: string, page: number): Promise<Array<string>> {
+		return this.contract.get24PER_follow(account, page);
+	}
+	/**
+	 * 自己修改自己的信息
+	 * @param items string(json)
+	 */
+	alertPER_items(items: string): Promise<void> {
+		return this.contract.alertPER_items(items);
+	}
+	/**
+	 * 修改自己的广告等级和广告图片链接
+	 * @param ad <广告等级>$<广告链接>
+	 */
+	alertPER_ad(ad: string): Promise<void> {
+		return this.contract.alertPER_ad(ad);
+	}
+	/**
+	 * 降低某位用户的信用分，每位管理员对同一位用户只能操作一次
+	 * @param account address
+	 */
+	reducePER_credit(account: string): Promise<void> {
+		return this.contract.reducePER_credit(account);
+	}
+	/**
+	 * 撤销降低，需要之前操作过
+	 * @param account address
+	 */
+	revokeReduce(account: string): Promise<void> {
+		return this.contract.revokeReduce(account);
+	}
+	// 3. event
+	E_alertPER_items(account: TopicAccount) {
+		const eventFilter = this.contract.filters.AlertPER_items(account);
+		return this.contract.queryFilter(eventFilter);
+	}
+	E_alertPER_ad(account: TopicAccount) {
+		const eventFilter = this.contract.filters.AlertPER_ad(account);
+		return this.contract.queryFilter(eventFilter);
+	}
+	E_alertCredit(admin: TopicAccount, account: TopicAccount) {
+		const eventFilter = this.contract.filters.AlertCredit(admin, account);
+		return this.contract.queryFilter(eventFilter);
+	}
 }
 
 export class BaseCopyright {
-	constructor(){
+	constructor() {
 		const { contract } = initContract();
 		this.contract = contract;
 	}
 	contract;
 	// 1. var
-		/**
-		 * 获取某消息同意的管理员人数
-		 * @param tokenID uint256
-		 */
-		getApproveCount(tokenID: number): Promise<number> {
-			return this.contract.approveCount(tokenID);
-		}
-		/**
-		 * 获取某管理员处理的所有消息
-		 * @param account address
-		 * @return [tokenID, tokenID, ...]
-		 */
-		getProcessed(account: string): Promise<Array<number>> {
-			return this.contract.getProcessed(account);
-		}
-		/**
-		 * 获取某FT的所有举报人
-		 * @param tokenID uint256
-		 * @return [address, address, ...]
-		 */
-		getMES_reporters(tokenID: number): Promise<Array<string>> {
-			return this.contract.getMES_reporters(tokenID);
-		}
-		/**
-		 * 获取所有已经提交举报的tokenID
-		 * @return [tokenID, tokenID, ...]
-		 */
-		getReportedTokenID(): Promise<Array<number>> {
-			return this.contract.getReportedTokenID();
-		}
-		// 2. function
-		/**
-		 * 举报某件FT
-		 * @param tokenID uint256
-		 */
-		report(tokenID: number): Promise<void> {
-			return this.contract.report(tokenID);
-		}
-		/**
-		 * 管理员同意某举报FT的消息
-		 * @param tokenID uint256
-		 */
-		approve(tokenID: number): Promise<void> {
-			const { contract } = initContract();
-			return this.contract.approve(tokenID);
-		}
-		/**
-		 * 管理员拒绝某举报FT的消息
-		 * @param tokenID uint256
-		 */
-		reject(tokenID: number): Promise<void> {
-			return this.contract.reject(tokenID);
-		}
-		/**
-		 * 管理员忽略某举报FT的消息
-		 * @param tokenID uint256
-		 */
-		ignore(tokenID: number): Promise<void> {
-			return this.contract.ignore(tokenID);
-		}
-		/**
-		 * 购买某件FT，调用时传入其他人地址就是为别人购买，
-		 * @param tokenID uint256
-		 * @param account address
-		 */
-		buyFT(tokenID: number, account: string): Promise<void> {
-			return this.contract.buyFT(tokenID, account);
-		}
-		/**
-		 * 铸造FT
-		 * @param tokenURI 图片链接，需要ipfs
-		 * @param owner address, 可以为自己和他人打造
-		 * @param price uint256
-		 * @param description string
-		 */
-		createFT(tokenURI: string, owner: string, price: number, description: string): Promise<void> {
-			return this.contract.addFT(tokenURI, owner, price, description);
-		}
-		// 3. event
-		E_alertCredit(admin: TopicAccount, account: TopicAccount){
-			const eventFilter = this.contract.filters.AlertCredit(admin, account);
-			return this.contract.queryFilter(eventFilter);
-		}
-		E_submit(){
-			const eventFilter = this.contract.filters.Submit();
-			return this.contract.queryFilter(eventFilter);
-		}
-		E_report(reporter: TopicAccount, tokenID: TopicInt){
-			const eventFilter = this.contract.filters.Report(reporter, tokenID);
-			return this.contract.queryFilter(eventFilter);
-		}
-		E_processAction(admin: TopicAccount, tokenID: TopicInt){
-			const eventFilter = this.contract.filters.ProcessAction(admin, tokenID);
-			return this.contract.queryFilter(eventFilter);
-		}
-		E_pirate(){
-			const eventFilter = this.contract.filters.Pirate();
-			return this.contract.queryFilter(eventFilter);
-		}
-		E_buyFT(sender: TopicAccount, account: TopicAccount, tokenID: TopicInt){
-			const eventFilter = this.contract.filters.BuyFT(sender, account, tokenID);
-			return this.contract.queryFilter(eventFilter);
-		}
+	/**
+	 * 获取某消息同意的管理员人数
+	 * @param tokenID uint256
+	 */
+	getApproveCount(tokenID: number): Promise<number> {
+		return this.contract.approveCount(tokenID);
+	}
+	/**
+	 * 获取某管理员处理的所有消息
+	 * @param account address
+	 * @return [tokenID, tokenID, ...]
+	 */
+	isProcessed(tokenID: number, account: string): Promise<boolean> {
+		return this.contract.isProcessed(tokenID, account);
+	}
+	// 2. function
+	/**
+	 * 举报某件FT
+	 * @param tokenID uint256
+	 */
+	report(tokenID: number): Promise<void> {
+		return this.contract.report(tokenID);
+	}
+	/**
+	 * 管理员同意某举报FT的消息
+	 * @param tokenID uint256
+	 */
+	approve(tokenID: number): Promise<void> {
+		return this.contract.approve(tokenID);
+	}
+	/**
+	 * 管理员拒绝某举报FT的消息
+	 * @param tokenID uint256
+	 */
+	reject(tokenID: number): Promise<void> {
+		return this.contract.reject(tokenID);
+	}
+	/**
+	 * 管理员忽略某举报FT的消息
+	 * @param tokenID uint256
+	 */
+	ignore(tokenID: number): Promise<void> {
+		return this.contract.ignore(tokenID);
+	}
+	/**
+	 * 购买某件FT，调用时传入其他人地址就是为别人购买，
+	 * @param tokenID uint256
+	 * @param account address
+	 */
+	buyFT(tokenID: number, account: string): Promise<void> {
+		return this.contract.buyFT(tokenID, account);
+	}
+	/**
+	 * 铸造FT
+	 * @param tokenURI 图片链接，需要ipfs
+	 * @param owner address, 可以为自己和他人打造
+	 * @param price uint256
+	 * @param description string
+	 */
+	createFT(tokenURI: string, owner: string, price: number, description: string): Promise<void> {
+		return this.contract.createFT(tokenURI, owner, price, description);
+	}
+	// 3. event
+	E_alertCredit(admin: TopicAccount, account: TopicAccount) {
+		const eventFilter = this.contract.filters.AlertCredit(admin, account);
+		return this.contract.queryFilter(eventFilter);
+	}
+	E_submit() {
+		const eventFilter = this.contract.filters.Submit();
+		return this.contract.queryFilter(eventFilter);
+	}
+	E_report(reporter: TopicAccount, tokenID: TopicInt) {
+		const eventFilter = this.contract.filters.Report(reporter, tokenID);
+		return this.contract.queryFilter(eventFilter);
+	}
+	E_processAction(admin: TopicAccount, tokenID: TopicInt) {
+		const eventFilter = this.contract.filters.ProcessAction(admin, tokenID);
+		return this.contract.queryFilter(eventFilter);
+	}
+	E_pirate() {
+		const eventFilter = this.contract.filters.Pirate();
+		return this.contract.queryFilter(eventFilter);
+	}
+	E_buyFT(sender: TopicAccount, account: TopicAccount, tokenID: TopicInt) {
+		const eventFilter = this.contract.filters.BuyFT(sender, account, tokenID);
+		return this.contract.queryFilter(eventFilter);
+	}
 }
 
 export class BaseCommunity {
-	constructor(){
+	constructor() {
 		const { contract } = initContract();
 		this.contract = contract;
 	}
@@ -391,7 +373,7 @@ export class BaseCommunity {
 	 * 关注某位博主
 	 * @param account address 博主的地址
 	 */
-	 follow(account: string): Promise<void> {
+	follow(account: string): Promise<void> {
 		return this.contract.follow(account);
 	}
 	/**
@@ -402,20 +384,14 @@ export class BaseCommunity {
 		return this.contract.cancelFollow(account);
 	}
 	// 3. event
-	E_alertFollow(sender: TopicAccount, account: TopicAccount, followOrCancel: TopicBool){
+	E_alertFollow(sender: TopicAccount, account: TopicAccount, followOrCancel: TopicBool) {
 		const eventFilter = this.contract.filters.AlertFollow(sender, account, followOrCancel);
 		return this.contract.queryFilter(eventFilter);
 	}
 }
 // todo 封装基础api
-export class Auth extends BaseAuth {
-	
-}
-export class Photo extends BasePhoto{}
-export class Person extends BasePerson{}
-export class Copyright extends BaseCopyright{
-
-}
-export class Community extends BaseCommunity{
-	
-}
+export class Auth extends BaseAuth {}
+export class Photo extends BasePhoto {}
+export class Person extends BasePerson {}
+export class Copyright extends BaseCopyright {}
+export class Community extends BaseCommunity {}
