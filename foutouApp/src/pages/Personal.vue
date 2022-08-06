@@ -1,11 +1,13 @@
 <template>
-	<div class="custom-bg">
+	<div
+		class="custom-bg"
+		:style="`background-image:url(${info.ad.link});`"
+		@mouseenter="isShowAlert = true"
+		@mouseleave="isShowAlert = false"
+	>
+		<div v-show="isShowAlert" class="alertAd" @click="adFormOpen">点击修改背景</div>
 		<div class="avatar">
-			<el-skeleton
-				style="--el-skeleton-circle-size: 10vw"
-				animated
-				:loading="loading"
-			>
+			<el-skeleton style="--el-skeleton-circle-size: 10vw" animated :loading="loading">
 				<template #template>
 					<el-skeleton-item variant="circle" />
 				</template>
@@ -31,22 +33,26 @@
 		</el-row>
 	</div>
 	<div class="list">
-		<el-menu
-			:default-active="activeIndex"
-			class="el-menu-demo"
-			mode="horizontal"
-			@select="handleSelect"
-		>
+		<el-menu :default-active="activeIndex" class="el-menu-demo" mode="horizontal" @select="handleSelect">
 			<el-menu-item index="1">已创建</el-menu-item>
 			<el-menu-item index="2">已购买</el-menu-item>
 			<el-menu-item index="3">粉丝列表</el-menu-item>
 			<el-menu-item index="4">关注列表</el-menu-item>
 		</el-menu>
-		<div v-if="currentIndex === '1'"><created-list :account="etherStore.account"></created-list></div>
-		<div v-if="currentIndex === '2'"><bought-list :account="etherStore.account"></bought-list></div>
-		<div v-if="currentIndex === '3'"><fans-list :account="etherStore.account"></fans-list></div>
-		<div v-if="currentIndex === '4'"><follow-list :account="etherStore.account"></follow-list></div>
+		<div v-if="currentIndex === '1'">
+			<created-list :account="etherStore.account"></created-list>
+		</div>
+		<div v-if="currentIndex === '2'">
+			<bought-list :account="etherStore.account"></bought-list>
+		</div>
+		<div v-if="currentIndex === '3'">
+			<fans-list :account="etherStore.account"></fans-list>
+		</div>
+		<div v-if="currentIndex === '4'">
+			<follow-list :account="etherStore.account"></follow-list>
+		</div>
 	</div>
+	<alert-ad-form ref="AdForm"></alert-ad-form>
 </template>
 <script setup lang="ts">
 // todo 以及加了一定的数据，同时PER_ITEMS也有了对应的解析结构，接下来就是需要请求API然后写写界面了
@@ -58,15 +64,20 @@ import CreatedList from "@/components/personal/CreatedList.vue";
 import BoughtList from "@/components/personal/BoughtList.vue";
 import FansList from "@/components/personal/FansList.vue";
 import FollowList from "@/components/personal/FollowList.vue";
+import AlertAdForm from "@/components/personal/AlertAdForm.vue";
 
 // todo 至于后续他人浏览自己的页面就是browse/address，所以在当前路由下肯定是自己浏览自己
 const etherStore = useEtherStore();
 
 let loading = ref(true);
 let credit = ref(0);
+let isShowAlert = ref(false);
+// 使用子组件暴露出来的属性
+let AdForm = ref({ dialogVisible: false });
+
 const info = reactive({
 	items: { name: "", description: "", avatar: "", twitter: "" },
-	ad: {},
+	ad: { link: "", rank: "0" },
 	credit: {},
 });
 const activeIndex = ref("1");
@@ -75,18 +86,28 @@ const handleSelect = (key: string, keyPath: string[]) => {
 	console.log(key, keyPath);
 	currentIndex.value = key;
 };
-
 onMounted(async () => {
 	const account = etherStore.account;
 	const person = new Person();
 
 	const srcItems = await person.getPER_items(account);
 	info.items = parsePER_items(srcItems);
+	const srcAd = await person.getPER_ad(account);
+	[info.ad.rank, info.ad.link] = srcAd.split("$");
 
-	info.ad = await person.getPER_ad(account);  // todo 后续还要修改背景图皮的样式
 	credit.value = await person.getPER_credit(account);
 	loading.value = false;
 });
+// todo 头像使用头像组件
+async function alertAd() {
+	// todo delete
+	// 1. 弹出模态框
+	// 2. 调用接口修改，提示用户是否修改成功
+	// 3. 调用接口获取信息
+}
+function adFormOpen() {
+	AdForm.value.dialogVisible = true;
+}
 </script>
 <style lang="scss" scoped>
 .custom-bg {
@@ -94,6 +115,17 @@ onMounted(async () => {
 	width: 100%;
 	background-color: $color-primary;
 	position: relative;
+	.alertAd {
+		width: 100%;
+		height: 12vw;
+		position: absolute;
+		top: 0;
+		left: 0;
+		background-color: rgba(131, 131, 131, 0.5);
+		text-align: center;
+		padding-top: 8vw;
+		cursor: pointer;
+	}
 	.avatar {
 		height: 10vw;
 		border-radius: 5vw;

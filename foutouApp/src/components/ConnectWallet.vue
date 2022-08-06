@@ -18,6 +18,7 @@
 </template>
 
 <script lang="ts" setup>
+// ! 这个组件应该是没用
 import { ref } from "vue";
 import { useEtherStore } from "@/store/etherStore";
 import { ElMessageBox } from "element-plus";
